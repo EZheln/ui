@@ -77,10 +77,13 @@ import {
   REMOVE_FUNCTION,
   SET_NEW_FUNCTION_FORCE_BUILD,
   SET_NEW_FUNCTION_PREEMTION_MODE,
-  SET_NEW_FUNCTION_PRIORITY_CLASS_NAME
+  SET_NEW_FUNCTION_PRIORITY_CLASS_NAME,
+  FETCH_FUNCTIONS_TEMPLATES_FAILURE,
+  FETCH_HUB_FUNCTIONS_FAILURE,
+  SET_HUB_FUNCTIONS
 } from '../constants'
 import { FORBIDDEN_ERROR_STATUS_CODE } from 'igz-controls/constants'
-import { generateCategories } from '../utils/generateTemplatesCategories'
+import { generateCategories, generateHubCategories } from '../utils/generateTemplatesCategories'
 import { setNotification } from '../reducers/notificationReducer'
 
 const functionsActions = {
@@ -101,8 +104,6 @@ const functionsActions = {
             : error.message
 
         dispatch(functionsActions.createNewFunctionFailure(message))
-
-        throw error
       })
   },
   createNewFunctionBegin: () => ({
@@ -165,66 +166,6 @@ const functionsActions = {
   fetchFunctionLogsSuccess: () => ({
     type: FETCH_FUNCTION_LOGS_SUCCESS
   }),
-  fetchFunctions: (project, filters) => dispatch => {
-    dispatch(functionsActions.fetchFunctionsBegin())
-
-    return functionsApi
-      .getFunctions(project, filters)
-      .then(({ data }) => {
-        dispatch(functionsActions.fetchFunctionsSuccess(data.funcs))
-
-        return data.funcs
-      })
-      .catch(err => {
-        dispatch(functionsActions.fetchFunctionsFailure(err.message))
-      })
-  },
-  fetchFunctionsBegin: () => ({
-    type: FETCH_FUNCTIONS_BEGIN
-  }),
-  fetchFunctionsFailure: error => ({
-    type: FETCH_FUNCTIONS_FAILURE,
-    payload: error
-  }),
-  fetchFunctionsSuccess: funcs => ({
-    type: FETCH_FUNCTIONS_SUCCESS,
-    payload: funcs
-  }),
-  fetchFunctionsTemplates: () => dispatch => {
-    return functionsApi
-      .getFunctionTemplatesCatalog()
-      .then(({ data: functionTemplates }) => {
-        const templatesData = generateCategories(functionTemplates)
-
-        dispatch(functionsActions.setFunctionsTemplates(templatesData))
-
-        return templatesData
-      })
-      .catch(error => dispatch(functionsActions.fetchJobLogsFailure(error)))
-  },
-  fetchHubFunction: hubFunctionName => dispatch => {
-    dispatch(functionsActions.fetchHubFunctionTemplateBegin())
-
-    return functionsApi
-      .getHubFunction(hubFunctionName)
-      .then(response => {
-        dispatch(functionsActions.fetchHubFunctionTemplateSuccess())
-        return response.data
-      })
-      .catch((error) => {
-        dispatch(functionsActions.fetchHubFunctionTemplateFailure(error))
-      })
-  },
-  fetchHubFunctionTemplateSuccess: () => ({
-    type: FETCH_HUB_FUNCTION_TEMPLATE_SUCCESS
-  }),
-  fetchHubFunctionTemplateBegin: () => ({
-    type: FETCH_HUB_FUNCTION_TEMPLATE_BEGIN
-  }),
-  fetchHubFunctionTemplateFailure: err => ({
-    type: FETCH_HUB_FUNCTION_TEMPLATE_FAILURE,
-    payload: err
-  }),
   fetchFunctionTemplate: path => dispatch => {
     dispatch(functionsActions.fetchFunctionTemplateBegin())
 
@@ -266,11 +207,90 @@ const functionsActions = {
     type: FETCH_FUNCTION_TEMPLATE_FAILURE,
     payload: err
   }),
-  getFunction: (project, name, hash) => dispatch => {
+  fetchFunctions: (project, filters) => dispatch => {
+    dispatch(functionsActions.fetchFunctionsBegin())
+
+    return functionsApi
+      .getFunctions(project, filters)
+      .then(({ data }) => {
+        dispatch(functionsActions.fetchFunctionsSuccess(data.funcs))
+
+        return data.funcs
+      })
+      .catch(err => {
+        dispatch(functionsActions.fetchFunctionsFailure(err.message))
+      })
+  },
+  fetchFunctionsBegin: () => ({
+    type: FETCH_FUNCTIONS_BEGIN
+  }),
+  fetchFunctionsFailure: error => ({
+    type: FETCH_FUNCTIONS_FAILURE,
+    payload: error
+  }),
+  fetchFunctionsSuccess: funcs => ({
+    type: FETCH_FUNCTIONS_SUCCESS,
+    payload: funcs
+  }),
+  fetchFunctionsTemplates: () => dispatch => {
+    return functionsApi
+      .getFunctionTemplatesCatalog()
+      .then(({ data: functionTemplates }) => {
+        const templatesData = generateCategories(functionTemplates)
+
+        dispatch(functionsActions.setFunctionsTemplates(templatesData))
+
+        return templatesData
+      })
+      .catch(error => {
+        dispatch(functionsActions.fetchFunctionsTemplatesFailure(error))
+      })
+  },
+  fetchFunctionsTemplatesFailure: err => ({
+    type: FETCH_FUNCTIONS_TEMPLATES_FAILURE,
+    payload: err
+  }),
+  fetchHubFunction: hubFunctionName => dispatch => {
+    dispatch(functionsActions.fetchHubFunctionTemplateBegin())
+
+    return functionsApi
+      .getHubFunction(hubFunctionName)
+      .then(response => {
+        dispatch(functionsActions.fetchHubFunctionTemplateSuccess())
+        return response.data
+      })
+      .catch(error => {
+        dispatch(functionsActions.fetchHubFunctionTemplateFailure(error))
+      })
+  },
+  fetchHubFunctionTemplateSuccess: () => ({
+    type: FETCH_HUB_FUNCTION_TEMPLATE_SUCCESS
+  }),
+  fetchHubFunctionTemplateBegin: () => ({
+    type: FETCH_HUB_FUNCTION_TEMPLATE_BEGIN
+  }),
+  fetchHubFunctionTemplateFailure: err => ({
+    type: FETCH_HUB_FUNCTION_TEMPLATE_FAILURE,
+    payload: err
+  }),
+  fetchHubFunctions: () => dispatch => {
+    return functionsApi.getHubFunctions().then(({ data: functionTemplates }) => {
+      const templatesData = generateHubCategories(functionTemplates.catalog)
+
+      dispatch(functionsActions.setHubFunctions(templatesData))
+
+      return templatesData
+    })
+  },
+  fetchHubFunctionsFailure: err => ({
+    type: FETCH_HUB_FUNCTIONS_FAILURE,
+    payload: err
+  }),
+  getFunction: (project, name, hash, tag) => dispatch => {
     dispatch(functionsActions.getFunctionBegin())
 
     return functionsApi
-      .getFunction(project, name, hash)
+      .getFunction(project, name, hash, tag)
       .then(result => {
         dispatch(functionsActions.getFunctionSuccess(result.data.func))
 
@@ -309,6 +329,10 @@ const functionsActions = {
   }),
   setFunctionsTemplates: payload => ({
     type: SET_FUNCTIONS_TEMPLATES,
+    payload
+  }),
+  setHubFunctions: payload => ({
+    type: SET_HUB_FUNCTIONS,
     payload
   }),
   setLoading: loading => ({
