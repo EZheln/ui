@@ -1097,6 +1097,7 @@ When(
 
         if (pageComponents[indx].includes('Button')) {
           if (row[indx] === 'yes') {
+            await hoverComponent(this.driver, pageObjects[wizardName][accordionName][pageComponents[indx]], false)
             await clickOnComponent(
               this.driver,
               pageObjects[wizardName][accordionName][pageComponents[indx]]

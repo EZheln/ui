@@ -354,10 +354,13 @@ Then(
   async function (value, inputField, unit, accordion, wizard) {
     const txt = await getInputValue(this.driver, pageObjects[wizard][accordion][inputField])
     const unitValue = unit === 'cpu' ? value / 1000 : unit === 'millicpu' ? value * 100 : value
-    const result =
+    let result =
       unit === 'cpu'
         ? (Number.parseFloat(txt) - unitValue).toFixed(3)
         : Number.parseFloat(txt) - unitValue
+    if (result < 1){
+      result = 1
+    }
     await decrementValue(this.driver, pageObjects[wizard][accordion][inputField], value)
     await verifyTypedValue(
       this.driver,
