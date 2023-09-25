@@ -18,6 +18,7 @@ under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
 import { Given, When, Then } from '@cucumber/cucumber'
+import * as fs from 'node:fs'
 import pageObjects from '../common/page-objects'
 import pageObjectsConsts from '../common-tools/common-consts'
 import { test_url, test_port } from '../../config'
@@ -900,6 +901,19 @@ Then('select {string} option in action menu on {string} wizard', async function 
   await openActionMenu(this.driver, actionMenu)
   await this.driver.sleep(500)
   await selectOptionInActionMenu(this.driver, actionMenu, option)
+})
+
+Then('check that Yaml file is existed on {string} path', async function (path) {
+  const exist = (path) => {
+    try{
+      fs.accessSync(path, fs.F_OK);
+      return true;
+    }catch(e){
+      if (e) {console.error(e)}
+      return false;
+    }
+  }
+  expect(exist).equal(true)
 })
 
 Then(
