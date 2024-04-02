@@ -77,33 +77,71 @@ export const getRule = (array, substring) => {
   const value = getRuleValue(array, substring)
 
   if (!value) return false
+  
+  else if (value.prefix === '') {
+    let validCharName = value.name.split(', ').map(el => el.replace(/\./g, '\\.')).join('')
+    
+    return {name: validCharName, prefix: ''}
+  }
 
-  return value
-    .split(', ')
-    .map(el => el.replace(/\./g, '\\.'))
-    .join('')
+  else if (value.prefix !== '') {
+    let validCharName = value.name.split(', ').map(el => el.replace(/\./g, '\\.')).join('')
+    let validCharPrefix = value.prefix.split(', ').map(el => el.replace(/\./g, '\\.')).join('')
+
+    return {name: validCharName, prefix: validCharPrefix}
+  }
 }
 
 const getRuleValue = (array, substring) => {
-  let stringWithValue = array.find(el => el.toLowerCase().includes(substring))
+  let stringWithValue = array.filter(el => el.toLowerCase().includes(substring))
 
   if(stringWithValue){
     //TODO: Add checks for Prefix, unique, spaces rules (labels, parameters)
-    if (stringWithValue.includes('[Prefix]')) {
-      stringWithValue = false
-    }
-    else if (stringWithValue.includes(':')) {
-      stringWithValue = stringWithValue.slice(stringWithValue.lastIndexOf(':') + 1).trim()
-    }
-    else if (stringWithValue.includes('-')) {
-      stringWithValue = parseInt(stringWithValue.slice(stringWithValue.lastIndexOf('-') + 1).trim())
-    }
-  }
-  else {
-    stringWithValue = false
-  }
+    if (stringWithValue.length > 1) {
+      let rulesValue = {name: '', prefix: ''}
+      
+      for (let value of stringWithValue) {
+        if (value.includes('[Name]') && value.includes('-')) {
+          rulesValue.name = parseInt(value.slice(value.lastIndexOf('-') + 1).trim())
+        }
+        else if (value.includes('[Prefix]') && value.includes('-') ) {
+          rulesValue.prefix = parseInt(value.slice(value.lastIndexOf('-') + 1).trim())
+        }
+        else if (value.includes('[Name]') && value.includes(':')) {
+          rulesValue.name = value.slice(value.lastIndexOf(':') + 1).trim()
+        }
+        else if (value.includes('[Prefix]') && value.includes(':')) {
+          rulesValue.prefix = value.slice(value.lastIndexOf(':') + 1).trim()
+        }  
+      }
 
-  return stringWithValue
+      return rulesValue
+    
+    } else {
+      if (stringWithValue.includes('[Prefix]')) {
+        //TODO: for rule - "[Prefix] Must not start with 'kubernetes.io', 'k8s.io'"
+        // let rulesValue = {name: '', prefix: ''}
+        // let startIdx = stringWithValue.indexOf("'") + 1
+        // let endIdx = stringWithValue.lastIndexOf("'")
+        // let valueSet = stringWithValue.slice(startIdx, endIdx)
+        //rulesValue.prefix = valueSet.replace(/'/g, '')
+        
+        stringWithValue = false
+      }
+      else if (stringWithValue.includes(':')) {
+        stringWithValue = stringWithValue.slice(stringWithValue.lastIndexOf(':') + 1).trim()
+      }
+      else if (stringWithValue.includes('-')) {
+        stringWithValue = parseInt(stringWithValue.slice(stringWithValue.lastIndexOf('-') + 1).trim())
+      }
+    
+      return stringWithValue
+    }
+  } else {
+    stringWithValue = false
+
+    return stringWithValue
+  }
 }
 
 const setInvalidCharacters = (allCharacters, rule, invalidCharacters) => {
@@ -172,20 +210,78 @@ export const generateRegEx = (
     }
   }
 
-  if (lengthRule) {
-    lengthRegular = `{1,${lengthRule}}`
+  if (lengthRule.prefix === '') {
+    lengthRegular = `{1,${lengthRule.name}}`
     validStrings.push('a')
     validStrings.push(
-      Array(Number(lengthRule))
+      Array(Number(lengthRule.name))
+        .fill('a')
+        .join('')
+    )    
+    // TODO: needs to implement paste functionality
+    invalidStrings.push(
+      Array(Number(lengthRule.name) + 1)
         .fill('a')
         .join('')
     )
-    // TODO: needs to implement paste functionality
-    // invalidStrings.push(
-    //   Array(Number(lengthRule) + 1)
-    //     .fill('a')
-    //     .join('')
-    // )
+  }
+
+  if (lengthRule.prefix !== '') {
+    let nameRuleValue = lengthRule.name
+    for (let value in lengthRule) {
+      if (value === 'name') {
+        lengthRegular = `{1,${lengthRule[value]}}`  // rule for name
+        validStrings.push('a')
+        validStrings.push(
+          Array(Number(lengthRule[value])) // rule for name
+            .fill('a')
+            .join('')
+        )
+        invalidStrings.push(
+          Array(Number(lengthRule[value]) + 1) // rule for name + 1
+            .fill('a')
+            .join('')
+        )
+      }
+      if (value === 'prefix'){
+        lengthRegular = `{1,${lengthRule[value]}}` // rule for prefix
+        validStrings.push('a/a')
+        validStrings.push(
+          `a/${Array(Number(nameRuleValue)) // rule for name
+          .fill('a')
+          .join('')}`
+        )
+        validStrings.push(
+          `${Array(Number(lengthRule[value])) // rule for prefix
+            .fill('a')
+            .join('')}/a`
+        )
+        validStrings.push(
+          `${Array(Number(lengthRule[value])) // rule for prefix
+            .fill('a')
+            .join('')}/${Array(Number(nameRuleValue)) // rule for name
+              .fill('a')
+              .join('')}`
+        )
+        invalidStrings.push(
+          `${Array(Number(lengthRule[value]) + 1) // rule for prefix + 1
+            .fill('a')
+            .join('')}/a`
+        )
+        invalidStrings.push(
+          `a/${Array(Number(nameRuleValue + 1)) // rule for name + 1
+          .fill('a')
+          .join('')}`
+        )
+        invalidStrings.push(
+          `${Array(Number(lengthRule[value] + 1)) // rule for prefix + 1
+            .fill('a')
+            .join('')}/${Array(Number(nameRuleValue + 1)) // rule for name + 1
+              .fill('a')
+              .join('')}`
+        )
+      }
+    }
   } else {
     lengthRegular = '*'
   }
