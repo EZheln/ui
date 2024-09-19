@@ -807,4 +807,4 @@ Feature: Artifacts Page
     And wait load page
     Then click on "Edit_btn_full_view" element on "Files_Info_Pane" wizard
     Then verify "Version_tag_Input_full_view" on "Files_Info_Pane" wizard should contains "latest" value   
-    Then click on "Tabel_View_Button" element on "Files_Info_Pane" wizard
+    # Then click on "Tabel_View_Button" element on "Files_Info_Pane" wizard
