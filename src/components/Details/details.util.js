@@ -78,8 +78,7 @@ export const generateArtifactsContent = (
         shouldPopUp: !isEmpty(selectedItem?.spec?.function_uri),
         handleClick: () =>
           openPopUp(FunctionPopUp, {
-            funcUri: selectedItem?.spec?.function_uri,
-            functionTag: selectedItem?.spec?.function_tag
+            funcUri: selectedItem?.spec?.function_uri
           })
       },
       function_tag: {

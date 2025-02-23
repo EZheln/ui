@@ -474,8 +474,7 @@ export const createModelEndpointsRowData = (artifact, project) => {
         className: 'table-cell-1',
         handleClick: () =>
           openPopUp(FunctionPopUp, {
-            funcUri: artifact.spec?.function_uri,
-            functionTag: artifact.spec?.function_tag
+            funcUri: artifact.spec?.function_uri
           }),
         type: 'link',
         tooltip: functionUri
