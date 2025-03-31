@@ -63,6 +63,7 @@ import {
   getSaveJobErrorMsg
 } from './JobWizard.util'
 import functionsActions from '../../actions/functions'
+import projectsAction from '../../actions/projects'
 import { FUNCTIONS_SELECTION_FUNCTIONS_TAB } from './JobWizardSteps/JobWizardFunctionSelection/jobWizardFunctionSelection.util'
 import { JOB_WIZARD_MODE } from '../../types'
 import { MODAL_MAX } from 'igz-controls/constants'
@@ -72,7 +73,6 @@ import { setNotification } from '../../reducers/notificationReducer'
 import { showErrorNotification } from '../../utils/notifications.util'
 import { useModalBlockHistory } from '../../hooks/useModalBlockHistory.hook'
 import { editJob, removeJobFunction, runNewJob } from '../../reducers/jobReducer'
-import { fetchProject } from '../../reducers/projectReducer'
 
 import './jobWizard.scss'
 
@@ -137,15 +137,7 @@ const JobWizard = ({
 
   useEffect(() => {
     if (!isEditMode) {
-      dispatch(
-        fetchProject({
-          project: params.projectName,
-          params: {
-            format: 'minimal'
-          }
-        })
-      )
-        .unwrap()
+      dispatch(projectsAction.fetchProject(params.projectName, { format: 'minimal' }))
         .then(response => setCurrentProject(response?.data))
         .catch(error => {
           showErrorNotification(dispatch, error, 'The project failed to load')
@@ -573,6 +565,7 @@ export default connect(
     jobsStore
   }),
   {
-    ...functionsActions
+    ...functionsActions,
+    ...projectsAction
   }
 )(JobWizard)

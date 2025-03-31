@@ -918,7 +918,7 @@ function getAlerts(req, res) {
 
   if (req.query['entity']) {
     collectedAlerts = collectedAlerts.filter(schedule =>
-      schedule.entity_id.includes(req.query['entity'].slice(1, -1))
+      schedule.name.includes(req.query['name'].slice(1))
     )
   }
 

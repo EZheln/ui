@@ -59,6 +59,7 @@ const ProjectsView = ({
   projectsRequestErrorMessage,
   projectStore,
   refreshProjects,
+  removeNewProjectError,
   selectedProjectsState,
   setCreateProject,
   setFilterMatches,
@@ -84,6 +85,7 @@ const ProjectsView = ({
         <CreateProjectDialog
           closeNewProjectPopUp={closeNewProjectPopUp}
           handleCreateProject={handleCreateProject}
+          removeNewProjectError={removeNewProjectError}
         />
       )}
       {confirmData && (
@@ -215,6 +217,7 @@ ProjectsView.propTypes = {
   handleSelectSortOption: PropTypes.func.isRequired,
   projectsRequestErrorMessage: PropTypes.string.isRequired,
   refreshProjects: PropTypes.func.isRequired,
+  removeNewProjectError: PropTypes.func.isRequired,
   selectedProjectsState: PropTypes.string.isRequired,
   setCreateProject: PropTypes.func.isRequired,
   setFilterMatches: PropTypes.func.isRequired,

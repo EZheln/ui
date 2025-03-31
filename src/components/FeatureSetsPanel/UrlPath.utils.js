@@ -30,6 +30,7 @@ import {
   S3_INPUT_PATH_SCHEME,
   V3IO_INPUT_PATH_SCHEME
 } from '../../constants'
+import projectsAction from '../../actions/projects'
 import {
   generateArtifactsList,
   generateArtifactsReferencesList,
@@ -37,7 +38,6 @@ import {
 } from '../../utils/panelPathScheme'
 import { showErrorNotification } from '../../utils/notifications.util'
 import { fetchArtifact, fetchArtifacts } from '../../reducers/artifactsReducer'
-import { fetchProjectsNames } from '../../reducers/projectReducer'
 import { isCommunityEdition } from '../../utils/helper'
 
 export const CSV = 'csv'
@@ -156,11 +156,9 @@ export const isUrlInputValid = (pathInputType, pathInputValue, dataSourceKind) =
 }
 
 export const getProjectsNames = (dispatch, setProjects, project) => {
-  dispatch(fetchProjectsNames())
-    .unwrap()
-    .then(projects => {
-      return setProjects(generateProjectsList(projects ?? [], project))
-    })
+  dispatch(projectsAction.fetchProjectsNames()).then(projects => {
+    return setProjects(generateProjectsList(projects ?? [], project))
+  })
 }
 
 export const getArtifacts = (dispatch, project, projectItemType, setArtifacts) => {

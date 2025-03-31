@@ -253,10 +253,12 @@ module.exports = {
       'Iter:',
       'Kind:',
       'Size:',
+      'Label column:',
       'Path:',
       'URI:',
       'Model file:',
       'Feature vector:',
+      'UID:',
       'Updated:',
       'Framework:',
       'Algorithm:',
@@ -277,13 +279,17 @@ module.exports = {
       'Feature set:',
       'Sampling percentage:',
       'Last prediction:',
-      'Error count:'
+      'Error count:',
+      'Accuracy:',
+      'Stream path:'
     ],
     Overview_Drift_Headers: [
       'Mean TVD:',
       'Mean Hellinger:',
       'Mean KLD:',
-      'Drift Actual Value:'
+      'Drift Actual Value:',
+      'Drift Detected Threshold:',
+      'Possible Drift Threshold:'
     ]
   },
   New_Feature_Store: {

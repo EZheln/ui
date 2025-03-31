@@ -21,7 +21,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import arrayMutators from 'final-form-arrays'
 import { Form } from 'react-final-form'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { createForm } from 'final-form'
 
 import ErrorMessage from '../../../common/ErrorMessage/ErrorMessage'
@@ -35,11 +35,14 @@ import {
   getInternalLabelsValidationRule
 } from 'igz-controls/utils/validation.util'
 import { setFieldState, isSubmitDisabled } from 'igz-controls/utils/form.util'
-import { removeNewProjectError } from '../../../reducers/projectReducer'
 
 import './createProjectDialog.scss'
 
-const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject }) => {
+const CreateProjectDialog = ({
+  closeNewProjectPopUp,
+  handleCreateProject,
+  removeNewProjectError
+}) => {
   const projectStore = useSelector(store => store.projectStore)
   const frontendSpec = useSelector(store => store.appStore.frontendSpec)
   const initialValues = {
@@ -54,7 +57,6 @@ const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject }) => {
       onSubmit: handleCreateProject
     })
   )
-  const dispatch = useDispatch()
 
   return (
     <PopUpDialog
@@ -103,7 +105,7 @@ const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject }) => {
                   <ErrorMessage
                     closeError={() => {
                       if (projectStore.newProject.error) {
-                        dispatch(removeNewProjectError())
+                        removeNewProjectError()
                       }
                     }}
                     message={projectStore.newProject.error}
@@ -136,7 +138,8 @@ const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject }) => {
 
 CreateProjectDialog.propTypes = {
   closeNewProjectPopUp: PropTypes.func.isRequired,
-  handleCreateProject: PropTypes.func.isRequired
+  handleCreateProject: PropTypes.func.isRequired,
+  removeNewProjectError: PropTypes.func.isRequired
 }
 
 export default CreateProjectDialog
