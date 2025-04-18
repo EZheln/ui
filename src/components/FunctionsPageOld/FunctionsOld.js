@@ -122,9 +122,10 @@ const Functions = ({
   }, [])
 
   const fetchData = useCallback(
-    filters => {
+    (filters, filtersAreHandled = false) => {
       terminateDeleteTasksPolling()
       abortControllerRef.current = new AbortController()
+      setFunctions([])
 
       return fetchFunctions(params.projectName, filters, {
         ui: {
@@ -161,7 +162,7 @@ const Functions = ({
           setFunctions(newFunctions)
 
           return newFunctions
-        } else {
+        } else if (!filtersAreHandled) {
           const paramsFunction = searchFunctionItem(
             params.hash,
             params.funcName,
@@ -177,7 +178,6 @@ const Functions = ({
               replace: true
             })
           }
-          setFunctions([])
         }
       })
     },
@@ -194,12 +194,12 @@ const Functions = ({
   )
 
   const refreshFunctions = useCallback(
-    filters => {
+    (filters, filtersAreHandled) => {
       setFunctions([])
       setSelectedFunctionMin({})
       setExpandedRowsData({})
 
-      return fetchData(filters)
+      return fetchData(filters, filtersAreHandled)
     },
     [fetchData]
   )
@@ -557,7 +557,7 @@ const Functions = ({
   }, [dispatch, params.projectName])
 
   const filtersChangeCallback = filters => {
-    refreshFunctions(filters)
+    refreshFunctions(filters, true)
   }
 
   const retryRequestCallback = useCallback(() => {
@@ -615,7 +615,7 @@ const Functions = ({
             `/projects/${params.projectName}/functions/${currentItem.hash}/${tab}${window.location.search}`
           )
         }
-        
+
         dispatch(
           setNotification({
             status: 200,
