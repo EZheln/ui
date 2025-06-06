@@ -91,10 +91,10 @@ jobs:
         id: run_parallel_tasks
         env:
           VITE_PUBLIC_URL: ""
-          VITE_MLRUN_V3IO_ACCESS_KEY: ${{ secrets.VITE_MLRUN_V3IO_ACCESS_KEY }}
-          VITE_MLRUN_API_URL: ${{ secrets.VITE_MLRUN_API_URL }}
-          VITE_NUCLIO_API_URL: ${{ secrets.VITE_NUCLIO_API_URL }}
-          VITE_IGUAZIO_API_URL: ${{ secrets.VITE_IGUAZIO_API_URL }}
+          VITE_MLRUN_V3IO_ACCESS_KEY: "8d9fe15d-4642-41b0-89f0-78d306480225"
+          VITE_MLRUN_API_URL: "http://localhost:30000/mlrun-api-ingress.default-tenant.app.vmdev36.lab.iguazeng.com"
+          VITE_NUCLIO_API_URL: "http://localhost:30000/nuclio-ingress.default-tenant.app.vmdev36.lab.iguazeng.com"
+          VITE_IGUAZIO_API_URL: "http://localhost:30000/platform-api.default-tenant.app.vmdev36.lab.iguazeng.com"
         run: |
           npm run add-comment-to-http-client &
           npm run mock-server &
