@@ -21,6 +21,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import classNames from 'classnames'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
+import { defaults } from 'lodash'
 
 import { Loader, PopUpDialog } from 'igz-controls/components'
 import StatsCard from '../../common/StatsCard/StatsCard'
@@ -39,7 +40,6 @@ const AlertsCounters = () => {
   const { projectName: paramProjectName } = useParams()
   const navigate = useNavigate()
   const projectStore = useSelector(store => store.projectStore)
-  const timeLabel = paramProjectName ? '24 hrs' : 'Last 24 hrs'
 
   const handleOpenPopUp = () => {
     const isHidden = !detailsRef.current?.offsetParent
@@ -77,7 +77,7 @@ const AlertsCounters = () => {
 
     return {
       projectName,
-      data: projectStore.jobsMonitoringData.alerts || defaultAlertData
+      data: defaults({}, projectStore.jobsMonitoringData.alerts, defaultAlertData)
     }
   }, [
     paramProjectName,
@@ -104,7 +104,7 @@ const AlertsCounters = () => {
         <StatsCard.Header title="Alerts" icon={<Alerts />} iconClass="stats-card__title-icon">
           <div className="project-card__info">
             <ClockIcon className="project-card__info-icon" />
-            <span>{timeLabel}</span>
+            <span>Last 24 hrs</span>
           </div>
         </StatsCard.Header>
         <div onMouseEnter={handleOpenPopUp} onMouseLeave={handleClosePopUp}>
