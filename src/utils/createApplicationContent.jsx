@@ -60,7 +60,7 @@ export const createApplicationContent = (application, projectName) => {
         headerId: 'commitedOffset',
         tip: 'Total number of messages handled by the app',
         headerLabel: 'Commited offset',
-        value: application.stats.stream_stats.committed ?? 0,
+        value: application.stats.stream_stats?.committed ?? 0,
         className: 'table-cell-2'
       },
       {
@@ -100,6 +100,7 @@ export const createApplicationContent = (application, projectName) => {
         className: 'table-cell-2',
         getLink: () =>
           generateNuclioLink(`/projects/${projectName}/functions/${nuclioFunctionName}`),
+        linkIsExternal: true,
         showStatus: true
       }
     ]
