@@ -214,6 +214,7 @@ const artifactsCategories = {
   dataset: ['dataset'],
   document: ['document'],
   model: ['model'],
+  'llm-prompt': ['llm-prompt'],
   other: ['', 'table', 'link', 'plot', 'chart', 'plotly', 'artifact']
 }
 
@@ -968,11 +969,7 @@ function getRuns(req, res) {
       pathToPartition.push('metadata.project')
     }
 
-    collectedRuns = getPartitionedData(
-      collectedRuns,
-      pathToPartition,
-      'status.last_update'
-    )
+    collectedRuns = getPartitionedData(collectedRuns, pathToPartition, 'status.last_update')
   }
 
   if (req.query['name']) {
@@ -2592,6 +2589,12 @@ function getModelEndpoints(req, res) {
     )
   }
 
+  if (req.query['mode']) {
+    collectedEndpoints = collectedEndpoints.filter(endpoint =>
+        Number(endpoint.metadata.mode) === Number(req.query['mode'])
+    )
+  }
+
   if (req.query['endpoint_id']) {
     const modelEndpoint = collectedEndpoints.find(
       endpoint => endpoint.metadata.uid === req.query.endpoint_id
@@ -2956,7 +2959,7 @@ app.get(
   getMonitoringApplicationData
 )
 app.get(
-  `${mlrunAPIIngress}/projects/:project/model-endpoints/drift-over-time`,
+  `${mlrunAPIIngress}/projects/:project/model-monitoring/drift-over-time`,
   getMonitoringApplicationDrift
 )
 

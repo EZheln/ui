@@ -6,7 +6,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@reduxjs/toolkit": "^1.9.5",
-    "axios": "1.8.2",
+    "axios": "1.12.0",
     "bfj": "^7.0.2",
     "camelcase": "^6.3.0",
     "chart.js": "^4.4.2",
@@ -140,7 +140,7 @@
     "react-dev-utils": "^12.0.1",
     "sass": "^1.72.0",
     "sass-loader": "^12.3.2",
-    "selenium-webdriver": "^4.0.0-beta.2",
+    "selenium-webdriver": "^4.35.0",
     "source-map-loader": "^5.0.0",
     "stylelint": "^13.3.3",
     "stylelint-config-rational-order": "^0.1.2",
