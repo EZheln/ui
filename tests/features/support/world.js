@@ -17,14 +17,15 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
+
 import seleniumWebdriver from 'selenium-webdriver'
 import chrome from 'selenium-webdriver/chrome'
 import firefox from 'selenium-webdriver/firefox'
 import { setWorldConstructor, setDefaultTimeout } from '@cucumber/cucumber'
 import { timeout, browser, headless, screen_size } from '../../config'
 
-require('chromedriver')
-require('geckodriver')
+import 'chromedriver'
+import 'geckodriver'
 
 class World {
   constructor({ attach, log, parameters }) {
@@ -40,22 +41,28 @@ class CustomWorld extends World {
 
     let browseConfigs
 
-    //browseConfigs = new chrome.Options().windowSize(screen_size) - can be used to define a specific screen size
     if (browser === 'chrome') {
+      browseConfigs = new chrome.Options()
+        .addArguments('start-maximized')
+        .excludeSwitches('disable-popup-blocking', 'enable-automation')
+
       if (headless) {
-        browseConfigs = new chrome.Options()
-          .addArguments('headless')
-          .addArguments('no-sandbox')
-          .addArguments('start-maximized')
-          .addArguments('disable-gpu')
-      } else browseConfigs = new chrome.Options()
-          .addArguments('start-maximized')
-          .excludeSwitches('disable-popup-blocking', 'enable-automation')
+        browseConfigs.addArguments('headless')
+        browseConfigs.addArguments('no-sandbox')
+        browseConfigs.addArguments('disable-gpu')
+        browseConfigs.addArguments(`window-size=${screen_size.width},${screen_size.height}`)
+        // browseConfigs.addArguments('force-device-scale-factor=0.9') // Optional
+        // browseConfigs.addArguments('high-dpi-support=1') // Optional
+      }
     }
+
     if (browser === 'firefox') {
+      browseConfigs = new firefox.Options()
       if (headless) {
-        browseConfigs = new firefox.Options().headless().windowSize(screen_size)
-      } else browseConfigs = new firefox.Options().windowSize(screen_size)
+        browseConfigs.headless().windowSize(screen_size)
+      } else {
+        browseConfigs.windowSize(screen_size)
+      }
     }
 
     this.driver = new seleniumWebdriver.Builder()
@@ -63,6 +70,10 @@ class CustomWorld extends World {
       .setChromeOptions(browseConfigs)
       .setFirefoxOptions(browseConfigs)
       .build()
+  }
+
+  async zoomOut(factor = 1.0) {
+    await this.driver.executeScript(`document.body.style.zoom = '${factor}'`)
   }
 }
 
