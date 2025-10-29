@@ -205,7 +205,7 @@ Then(
 
 Then('wait load page', async function() {
   await waitPageLoad(this.driver, pageObjects['commonPagesHeader']['loader'])
-  await this.driver.sleep(1000)
+  await this.driver.sleep(500)
 })
 
 Then('wait for {int} seconds', async function(seconds) {
