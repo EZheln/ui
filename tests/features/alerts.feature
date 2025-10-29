@@ -2,7 +2,7 @@ Feature: Alerts Page
 
     Testcases that verifies functionality on MLRun Alerts Page
 
-    @MLAlert
+    @MLAlerttest
     @smoke
     Scenario: MLAlert001 - Check components on Alerts page
         Given open url
