@@ -4,7 +4,7 @@ Feature: Artifacts Page
 
   @MLA
   @passive
-  @smoke
+  @smoke2
   Scenario: MLA001 - Check all mandatory components on Artifacts tab
     Given open url
     And wait load page
