@@ -17,25 +17,26 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import React from 'react'
-
-import { PENDING_STATE } from '../constants'
-
-export const generatePods = (project, uid, pods) => {
-  const podsList = pods?.[project]?.[uid]?.pod_resources ?? []
-  const podsTooltip = podsList.map((value, index) => (
-    <p key={index}>
-      {value?.name}
-      {value?.status?.phase?.toLowerCase?.() === PENDING_STATE
-        ? ' (pending...)'
-        : (value?.status?.phase?.toLowerCase ?? '')}
-    </p>
-  ))
-  const podsPending = podsList.filter(pod => pod?.status?.phase?.toLowerCase?.() === PENDING_STATE)
-
+export const getSecretNameValidator = (projectName, initialSecretName) => {
   return {
-    podsList,
-    podsPending,
-    podsTooltip
+    name: 'secretProhibitedNames',
+    label: 'Secret does not reference an MLRun secret defined in another project',
+    pattern: secretName => {
+      // if prohibited secret was set before (we get it from BE) we accept it as valid
+      if (secretName && secretName === initialSecretName) return true
+
+      if (secretName.startsWith('mlrun-auth-secrets.')) return false
+
+      const correctPatternBeginning = 'mlrun-project-secrets-' // mlrun-project-secrets-{project-name}
+
+      if (secretName.startsWith(correctPatternBeginning)) {
+        const secretProjectName = secretName.slice(correctPatternBeginning.length)
+
+        return secretProjectName === projectName
+      }
+
+      return true
+    }
   }
 }
+
