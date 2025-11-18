@@ -66,6 +66,7 @@
     "build-storybook": "build-storybook",
     "mock-server": "node scripts/mockServer.js",
     "mock-server:dev": "nodemon --watch tests/mockServer scripts/mockServer.js",
+    "add-comment-to-http-client": "node scripts/ci-cd-scripts/appendCommentToHttpClient.js",
     "test": "vitest",
     "test:ui": "node scripts/testui.js",
     "test:watch": "vitest --watch",
