@@ -122,13 +122,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '21'
 
       - name: get needs object
         run: echo "${{toJson(needs)}}"
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run ESLint
         run: |
