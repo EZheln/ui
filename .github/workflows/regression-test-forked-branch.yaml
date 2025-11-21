@@ -85,7 +85,7 @@ jobs:
       - name: Install dependencies
         id: install_dependencies
         if: steps.node_cache.outputs.cache-hit != 'true'
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run parallel tasks
         id: run_parallel_tasks
