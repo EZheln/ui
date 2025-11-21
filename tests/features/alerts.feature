@@ -359,6 +359,7 @@ Feature: Alerts Page
 
     @MLAlert
     @smoke
+    @uniqueTag
     Scenario: MLAlert007 - Check components on Endpoints alert detail pane on Alerts page
         Given open url
         And wait load page
