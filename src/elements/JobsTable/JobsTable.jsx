@@ -137,6 +137,20 @@ const JobsTable = React.forwardRef(
       [handleFetchJobLogs, selectedJob]
     )
 
+    const detailsFormInitialValues = useMemo(() => {
+      return {
+        labels: selectedJob.labels ?? [],
+        results: selectedJob.resultsChips ?? [],
+        parameters: selectedJob.parametersChips ?? [],
+        nodeSelector: selectedJob.nodeSelectorChips ?? []
+      }
+    }, [
+      selectedJob.labels,
+      selectedJob.nodeSelectorChips,
+      selectedJob.parametersChips,
+      selectedJob.resultsChips
+    ])
+
     const setJobStatusAborting = useCallback(
       (job, task) => {
         const setData = params.jobName ? setJobRuns : setJobs
@@ -411,6 +425,7 @@ const JobsTable = React.forwardRef(
             <>
               <Table
                 actionsMenu={actionsMenu}
+                detailsFormInitialValues={detailsFormInitialValues}
                 getCloseDetailsLink={() =>
                   getCloseDetailsLink(
                     params.jobName ||
