@@ -128,7 +128,7 @@ jobs:
         run: echo "${{toJson(needs)}}"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Run ESLint
         run: |
