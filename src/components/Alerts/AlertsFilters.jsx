@@ -24,7 +24,7 @@ import PropTypes from 'prop-types'
 import { useForm, useFormState } from 'react-final-form'
 import { upperFirst } from 'lodash'
 
-import StatusFilter from '../../common/StatusFilter/StatusFilter'
+import MultiSelectFilter from '../../common/MultiSelectFilter/MultiSelectFilter'
 import { FormSelect, FormInput, FormOnChange } from 'igz-controls/components'
 
 import { generateProjectsList } from '../../utils/projects'
@@ -177,7 +177,7 @@ const AlertsFilters = ({ isAlertsPage, isCrossProjects }) => {
         </>
       )}
       <div className="form-row">
-        <StatusFilter statusList={filterAlertsSeverityOptions} name={SEVERITY} />
+        <MultiSelectFilter optionsList={filterAlertsSeverityOptions} name={SEVERITY} />
       </div>
       <div className="form-row">
         <FormSelect

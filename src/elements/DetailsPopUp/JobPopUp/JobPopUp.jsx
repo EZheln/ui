@@ -30,7 +30,7 @@ import { generatePageData } from '../../JobsTable/jobsTable.util'
 import { getJobLogs } from '../../../utils/getJobLogs.util'
 import { enrichRunWithFunctionFields, monitorJob } from '../../../components/Jobs/jobs.util'
 import { generateActionsMenu } from '../../../components/Jobs/MonitorJobs/monitorJobs.util'
-import { showErrorNotification } from '../../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { usePods } from '../../../hooks/usePods.hook'
 import { toggleYaml } from '../../../reducers/appReducer'
 import { fetchJob } from '../../../reducers/jobReducer'
@@ -64,6 +64,20 @@ const JobPopUp = ({ isOpen, jobData, onResolve }) => {
     },
     [frontendSpec.jobs_dashboard_url, jobData.project]
   )
+
+  const detailsFormInitialValues = useMemo(() => {
+    return {
+      labels: selectedJob.labels ?? [],
+      results: selectedJob.resultsChips ?? [],
+      parameters: selectedJob.parametersChips ?? [],
+      nodeSelector: selectedJob.nodeSelectorChips ?? []
+    }
+  }, [
+    selectedJob.labels,
+    selectedJob.nodeSelectorChips,
+    selectedJob.parametersChips,
+    selectedJob.resultsChips
+  ])
 
   const pageData = useMemo(
     () =>
@@ -132,6 +146,7 @@ const JobPopUp = ({ isOpen, jobData, onResolve }) => {
   return (
     <DetailsPopUp
       actionsMenu={actionsMenu}
+      formInitialValues={detailsFormInitialValues}
       handleRefresh={handleFetchJob}
       isLoading={isLoading}
       isOpen={isOpen}

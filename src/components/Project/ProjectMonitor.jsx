@@ -38,7 +38,7 @@ import {
 import {
   fetchProject,
   fetchProjectFunctions,
-  fetchProjectSummary,
+  fetchProjectSummaryAndNuclioFuncs,
   removeProjectData,
   removeProjectSummary
 } from '../../reducers/projectReducer'
@@ -46,12 +46,13 @@ import { areNuclioStreamsEnabled } from '../../utils/helper'
 import { fetchNuclioV3ioStreams } from '../../reducers/nuclioReducer'
 import { generateCreateNewOptions, handleFetchProjectError } from './project.utils'
 import { openPopUp } from 'igz-controls/utils/common.util'
+import { generateNuclioLink } from '../../utils'
 import { removeFunctionsError, removeNewFunction } from '../../reducers/functionReducer'
 import { removeNewFeatureSet } from '../../reducers/featureStoreReducer'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
-import { useMode } from '../../hooks/mode.hook'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { useNuclioMode } from '../../hooks/nuclioMode.hook'
+import { useMode } from '../../hooks/mode.hook'
 
 const ProjectMonitor = () => {
   const [createFeatureSetPanelIsOpen, setCreateFeatureSetPanelIsOpen] = useState(false)
@@ -60,12 +61,13 @@ const ProjectMonitor = () => {
   const [confirmData, setConfirmData] = useState(null)
   const navigate = useNavigate()
   const params = useParams()
-  const { isDemoMode } = useMode()
   const dispatch = useDispatch()
   const { isNuclioModeDisabled } = useNuclioMode()
+  const { isDemoMode } = useMode()
   const projectAbortControllerRef = useRef(new AbortController())
   const projectSummariesAbortControllerRef = useRef(new AbortController())
   const v3ioStreamsAbortControllerRef = useRef(new AbortController())
+  const nuclioFunctionsAbortControllerRef = useRef(new AbortController())
   const frontendSpec = useSelector(state => state.appStore.frontendSpec)
   const functionsStore = useSelector(store => store.functionsStore)
   const projectStore = useSelector(store => store.projectStore)
@@ -87,6 +89,13 @@ const ProjectMonitor = () => {
     [frontendSpec]
   )
 
+  const openRegisterModelModal = useCallback(() => {
+    openPopUp(RegisterModelModal, {
+      params: params,
+      refresh: () => navigate(registerArtifactLink(MODEL_TYPE))
+    })
+  }, [params, navigate, registerArtifactLink])
+
   const openRegisterArtifactModal = useCallback(
     artifactKind => {
       openPopUp(RegisterArtifactModal, {
@@ -98,19 +107,13 @@ const ProjectMonitor = () => {
     },
     [navigate, params, registerArtifactLink]
   )
-
-  const openRegisterModelModal = useCallback(() => {
-    openPopUp(RegisterModelModal, {
-      params: params,
-      refresh: () => navigate(registerArtifactLink(MODEL_TYPE))
-    })
-  }, [params, navigate, registerArtifactLink])
-
   const { createNewOptions } = useMemo(() => {
     const createNewOptions = generateCreateNewOptions(
       navigate,
       params,
       openRegisterArtifactModal,
+      generateNuclioLink,
+      openPopUp,
       openRegisterModelModal,
       setCreateFeatureSetPanelIsOpen,
       setIsNewFunctionPopUpOpen,
@@ -120,11 +123,12 @@ const ProjectMonitor = () => {
     return {
       createNewOptions
     }
-  }, [isDemoMode, navigate, params, openRegisterArtifactModal, openRegisterModelModal])
+  }, [navigate, params, openRegisterArtifactModal, openRegisterModelModal, isDemoMode])
 
   const fetchProjectDataAndSummary = useCallback(() => {
     projectAbortControllerRef.current = new AbortController()
     projectSummariesAbortControllerRef.current = new AbortController()
+    nuclioFunctionsAbortControllerRef.current = new AbortController()
 
     Promise.all([
       dispatch(
@@ -135,9 +139,10 @@ const ProjectMonitor = () => {
         })
       ).unwrap(),
       dispatch(
-        fetchProjectSummary({
+        fetchProjectSummaryAndNuclioFuncs({
           project: params.projectName,
-          signal: projectSummariesAbortControllerRef.current.signal
+          projectSummarySignal: projectSummariesAbortControllerRef.current.signal,
+          functionsSignal: nuclioFunctionsAbortControllerRef.current.signal
         })
       ).unwrap()
     ]).catch(error => {
@@ -154,6 +159,7 @@ const ProjectMonitor = () => {
       projectAbortControllerRef.current.abort(REQUEST_CANCELED)
       projectSummariesAbortControllerRef.current.abort(REQUEST_CANCELED)
       v3ioStreamsAbortControllerRef.current.abort(REQUEST_CANCELED)
+      nuclioFunctionsAbortControllerRef.current.abort(REQUEST_CANCELED)
     }
   }, [params.projectName])
 

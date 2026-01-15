@@ -26,30 +26,31 @@ import ProjectSettingsMembers from '../../elements/ProjectSettingsMembers/Projec
 import ProjectSettingsSecrets from '../../elements/ProjectSettingsSecrets/ProjectSettingsSecrets'
 import Breadcrumbs from '../../common/Breadcrumbs/Breadcrumbs'
 import ContentMenu from '../../elements/ContentMenu/ContentMenu'
-import Loader from '../../common/Loader/Loader'
-
-import { Button, ConfirmDialog } from 'igz-controls/components'
-import { DANGER_BUTTON, TERTIARY_BUTTON } from 'igz-controls/constants'
+import { Button, ConfirmDialog, Loader } from 'igz-controls/components'
 
 import {
-  COMPLETED_STATE,
   generateMembers,
   isProjectMembersTabShown,
   page,
   tabs,
   validTabs
 } from './projectSettings.util'
-import { onDeleteProject } from '../ProjectsPage/projects.util'
 import {
   initialMembersState,
   membersActions,
   membersReducer
 } from '../../elements/MembersPopUp/membersReducer'
 import projectsIguazioApi from '../../api/projects-iguazio-api'
-import { PROJECTS_SETTINGS_MEMBERS_TAB, PROJECTS_SETTINGS_SECRETS_TAB } from '../../constants'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { DANGER_BUTTON, TERTIARY_BUTTON } from 'igz-controls/constants'
+import {
+  COMPLETED_STATE,
+  PROJECTS_SETTINGS_MEMBERS_TAB,
+  PROJECTS_SETTINGS_SECRETS_TAB
+} from '../../constants'
 import { fetchProjects } from '../../reducers/projectReducer'
+import { onDeleteProject } from '../ProjectsPage/projects.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 
 import './projectSettings.scss'
 
@@ -287,11 +288,11 @@ const ProjectSettings = () => {
 
       {projectStore.projectsToDelete.includes(params.projectName) && <Loader />}
 
-      <div className="settings">
-        <div className="settings__header">
+      <div className="content-wrapper">
+        <div className="content__header">
           <Breadcrumbs />
         </div>
-        <div className="settings__content">
+        <div className="content settings-content">
           <div className="content__action-bar-wrapper">
             <ContentMenu
               activeTab={params.pageTab}

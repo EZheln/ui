@@ -20,15 +20,14 @@ such restriction.
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { isEmpty } from 'lodash'
 
 import ActionBar from '../../ActionBar/ActionBar'
 import ArtifactsTableRow from '../../../elements/ArtifactsTableRow/ArtifactsTableRow'
-import Loader from '../../../common/Loader/Loader'
 import ModelEndpointsFilters from './ModelEndpointsFilters'
 import ModelsPageTabs from '../ModelsPageTabs/ModelsPageTabs'
 import NoData from '../../../common/NoData/NoData'
 import Table from '../../Table/Table'
+import { Loader } from 'igz-controls/components'
 
 import {
   GROUP_BY_NONE,
@@ -36,7 +35,12 @@ import {
   MODELS_PAGE,
   REQUEST_CANCELED
 } from '../../../constants'
-import { chooseOrFetchModelEndpoint, filtersConfig, generatePageData } from './modelEndpoints.util'
+import {
+  chooseOrFetchModelEndpoint,
+  filtersConfig,
+  generateActionsMenu,
+  generatePageData
+} from './modelEndpoints.util'
 import { createModelEndpointsRowData } from '../../../utils/createArtifactsContent'
 import { fetchModelEndpoints, removeModelEndpoints } from '../../../reducers/artifactsReducer'
 import { getNoDataMessage } from '../../../utils/getNoDataMessage'
@@ -44,13 +48,11 @@ import { getScssVariableValue } from 'igz-controls/utils/common.util'
 import { isDetailsTabExists } from '../../../utils/link-helper.util'
 import { isRowRendered, useVirtualization } from '../../../hooks/useVirtualization.hook'
 import { setFilters } from '../../../reducers/filtersReducer'
+import { clearMetricsOptions } from '../../../reducers/detailsReducer'
 import { useFiltersFromSearchParams } from '../../../hooks/useFiltersFromSearchParams.hook'
 import { useInitialTableFetch } from '../../../hooks/useInitialTableFetch.hook'
 import { useModelsPage } from '../ModelsPage.context'
 import { useSortTable } from '../../../hooks/useSortTable.hook'
-
-import MonitorIcon from 'igz-controls/images/monitor-icon.svg?react'
-import Yaml from 'igz-controls/images/yaml.svg?react'
 
 import './modelEndpoints.scss'
 
@@ -58,7 +60,6 @@ const ModelEndpoints = () => {
   const [requestErrorMessage, setRequestErrorMessage] = useState('')
   const [modelEndpoints, setModelEndpoints] = useState([])
   const [selectedModelEndpoint, setSelectedModelEndpoint] = useState({})
-  const frontendSpec = useSelector(store => store.appStore.frontendSpec)
   const artifactsStore = useSelector(store => store.artifactsStore)
   const filtersStore = useSelector(store => store.filtersStore)
   const params = useParams()
@@ -70,7 +71,7 @@ const ModelEndpoints = () => {
   const [, setSearchParams] = useSearchParams()
   const filters = useFiltersFromSearchParams(filtersConfig)
 
-  const { handleMonitoring, toggleConvertedYaml } = useModelsPage()
+  const { handleMonitoring, toggleConvertedYaml, frontendSpec } = useModelsPage()
 
   const modelEndpointsRowHeight = useMemo(
     () => getScssVariableValue('--modelEndpointsRowHeight'),
@@ -95,34 +96,20 @@ const ModelEndpoints = () => {
   )
 
   const actionsMenu = useMemo(
-    () => [
-      [
-        {
-          label: 'Monitoring',
-          icon: <MonitorIcon />,
-          tooltip: !frontendSpec.model_monitoring_dashboard_url
-            ? 'Grafana service unavailable'
-            : '',
-          disabled: !frontendSpec.model_monitoring_dashboard_url,
-          onClick: handleMonitoring,
-          hidden: !isEmpty(selectedModelEndpoint)
-        },
-        {
-          label: 'View YAML',
-          icon: <Yaml />,
-          onClick: modelEndpointMin =>
-            chooseOrFetchModelEndpoint(dispatch, selectedModelEndpoint, modelEndpointMin).then(
-              toggleConvertedYaml
-            )
-        }
-      ]
-    ],
+    () =>
+      generateActionsMenu(
+        frontendSpec.model_monitoring_dashboard_url,
+        handleMonitoring,
+        toggleConvertedYaml,
+        selectedModelEndpoint,
+        dispatch
+      ),
     [
       dispatch,
-      frontendSpec.model_monitoring_dashboard_url,
       handleMonitoring,
       selectedModelEndpoint,
-      toggleConvertedYaml
+      toggleConvertedYaml,
+      frontendSpec.model_monitoring_dashboard_url
     ]
   )
 
@@ -190,6 +177,12 @@ const ModelEndpoints = () => {
       abortControllerRef.current.abort(REQUEST_CANCELED)
     }
   }, [dispatch, params.projectName])
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearMetricsOptions())
+    }
+  }, [dispatch])
 
   useEffect(() => {
     if (params.name && modelEndpoints.length > 0) {

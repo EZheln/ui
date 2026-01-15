@@ -19,7 +19,7 @@ such restriction.
 */
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import jobsApi from '../api/jobs-api'
-import { hideLoading, showLoading } from './redux.util'
+import { defaultRejectedHandler, hideLoading, showLoading } from './redux.util'
 import { get } from 'lodash'
 import {
   DATES_FILTER,
@@ -31,7 +31,7 @@ import {
 } from '../constants'
 import { largeResponseCatchHandler } from '../utils/largeResponseCatchHandler'
 import functionsApi from '../api/functions-api'
-import { showErrorNotification } from '../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { getNewJobErrorMsg } from '../components/JobWizard/JobWizard.util'
 
 const initialState = {
@@ -42,7 +42,7 @@ const initialState = {
   jobRuns: [],
   jobs: [],
   logs: {
-    loading: false,
+    loadingCounter: 0,
     error: null
   },
   loading: false,
@@ -140,8 +140,8 @@ export const deleteAllJobRuns = createAsyncThunk('deleteAllJobRuns', ({ project,
 export const deleteJob = createAsyncThunk('deleteJob', ({ project, job }) => {
   return jobsApi.deleteJob(project, job.uid)
 })
-export const editJob = createAsyncThunk('editJob', ({ postData, project }) => {
-  return jobsApi.editJob(postData, project)
+export const editJob = createAsyncThunk('editJob', ({ postData, project }, thunkAPI) => {
+  return jobsApi.editJob(postData, project).catch(thunkAPI.rejectWithValue)
 })
 export const fetchAllJobRuns = createAsyncThunk(
   'fetchAllJobRuns',
@@ -194,8 +194,8 @@ export const fetchJobFunctions = createAsyncThunk('fetchJobFunctions', ({ projec
     return res.data?.funcs
   })
 })
-export const fetchJobLogs = createAsyncThunk('fetchJobLogs', ({ id, project }) => {
-  return jobsApi.getJobLogs(id, project).then(result => {
+export const fetchJobLogs = createAsyncThunk('fetchJobLogs', ({ id, project, attempt, signal }) => {
+  return jobsApi.getJobLogs(id, project, attempt, signal).then(result => {
     return result
   })
 })
@@ -382,15 +382,15 @@ const jobsSlice = createSlice({
       state.jobLoadingCounter--
     })
     builder.addCase(fetchJobLogs.pending, state => {
-      state.logs.loading = true
+      state.logs.loadingCounter++
       state.logs.error = null
     })
     builder.addCase(fetchJobLogs.fulfilled, state => {
       state.logs.error = null
-      state.logs.loading = false
+      state.logs.loadingCounter--
     })
     builder.addCase(fetchJobLogs.rejected, (state, action) => {
-      state.logs.loading = false
+      state.logs.loadingCounter--
       state.logs.error = action.payload
     })
     builder.addCase(fetchJobs.pending, showLoading)
@@ -415,9 +415,9 @@ const jobsSlice = createSlice({
       state.scheduled = []
       state.loading = false
     })
-    builder.addCase(removeScheduledJob.rejected, (state, action) => {
-      state.error = action.payload
-    })
+    builder.addCase(removeScheduledJob.pending, showLoading)
+    builder.addCase(removeScheduledJob.fulfilled, hideLoading)
+    builder.addCase(removeScheduledJob.rejected, defaultRejectedHandler)
     builder.addCase(runNewJob.pending, showLoading)
     builder.addCase(runNewJob.fulfilled, state => {
       state.error = null

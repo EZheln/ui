@@ -32,9 +32,13 @@ import {
   LLM_PROMPTS_PAGE,
   MODEL_TYPE,
   MODELS_PAGE,
-  VIEW_SEARCH_PARAMETER
+  TAG_FILTER_ALL_ITEMS,
+  TAG_FILTER_LATEST,
+  ALL_VERSIONS_PATH,
+  LLM_PROMPT_TYPE,
+  LLM_PROMPT_TITLE
 } from '../constants'
-import { TAG_FILTER_ALL_ITEMS, TAG_FILTER_LATEST, ALL_VERSIONS_PATH } from '../constants'
+import { VIEW_SEARCH_PARAMETER } from 'igz-controls/constants'
 import {
   deleteTag,
   editTag,
@@ -49,9 +53,13 @@ import { getArtifactIdentifier } from './getUniqueIdentifier'
 import { parseArtifacts } from './parseArtifacts'
 import { parseIdentifier } from './parseUri'
 import { setFilters, setModalFiltersValues } from '../reducers/filtersReducer'
-import { showErrorNotification } from './notifications.util'
-import { getFilteredSearchParams } from './filter.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
+import { getFilteredSearchParams } from 'igz-controls/utils/filter.util'
 import { generateObjectNotInTheListMessage } from './generateMessage.util'
+import { openPopUp } from 'igz-controls/utils/common.util'
+import { ConfirmDialog } from 'igz-controls/components'
+import { PRIMARY_BUTTON, TERTIARY_BUTTON } from 'igz-controls/constants'
+import { getArtifactMessagesByKind } from './createArtifact.util'
 
 export const applyTagChanges = (changes, artifactItem, projectName, dispatch, setNotification) => {
   let updateTagMsg = 'Tag was updated'
@@ -113,6 +121,93 @@ export const applyTagChanges = (changes, artifactItem, projectName, dispatch, se
   } else {
     return updateTagPromise
   }
+}
+
+export const processActionAfterTagUniquesValidation = ({
+  tag = '',
+  artifact,
+  projectName,
+  dispatch,
+  actionCallback,
+  showLoader = () => {},
+  hideLoader = () => {},
+  getCustomErrorMsg = () => 'Failed to update a tag',
+  onErrorCallback,
+  throwError = false
+}) => {
+  showLoader()
+
+  if (tag === '') {
+    return actionCallback().finally(hideLoader)
+  }
+
+  const messagesByKind = getArtifactMessagesByKind(artifact.kind)
+
+  return artifactApi
+    .getExpandedArtifact(projectName, artifact.db_key ?? artifact.spec.db_key ?? artifact.key, tag)
+    .then(response => {
+      if (response?.data) {
+        if (!isEmpty(response.data.artifacts)) {
+          return new Promise((resolve, _reject) => {
+            const reject = (...args) => {
+              hideLoader()
+
+              return _reject(...args)
+            }
+
+            // hide and show loader again to avoid UI loader above confirmation dialog
+            hideLoader()
+            openPopUp(ConfirmDialog, {
+              confirmButton: {
+                label: 'Overwrite',
+                variant: PRIMARY_BUTTON,
+                handler: () => {
+                  showLoader()
+                  actionCallback().then(resolve).catch(reject).finally(hideLoader)
+                }
+              },
+              cancelButton: {
+                label: 'Cancel',
+                variant: TERTIARY_BUTTON,
+                handler: () => reject()
+              },
+              closePopUp: () => reject(),
+              header: messagesByKind.overwriteConfirmTitle,
+              message: messagesByKind.getOverwriteConfirmMessage(
+                response.data.artifacts[0].kind === LLM_PROMPT_TYPE
+                  ? LLM_PROMPT_TITLE
+                  : response.data.artifacts[0].kind || ARTIFACT_TYPE
+              ),
+              className: 'override-artifact-dialog'
+            })
+          })
+        } else {
+          return actionCallback().finally(hideLoader)
+        }
+      }
+    })
+    .catch(error => {
+      if (error) {
+        showErrorNotification(dispatch, error, '', getCustomErrorMsg(error), () =>
+          processActionAfterTagUniquesValidation({
+            tag,
+            artifact,
+            projectName,
+            dispatch,
+            actionCallback,
+            getCustomErrorMsg,
+            onErrorCallback,
+            throwError
+          })
+        )
+
+        onErrorCallback?.()
+      }
+
+      hideLoader()
+
+      if (throwError) throw error
+    })
 }
 
 export const isArtifactTagUnique = (projectName, category, artifact) => async value => {
@@ -225,6 +320,7 @@ export const checkForSelectedArtifact = debounce(
     artifactName,
     artifacts,
     dispatch,
+    ignoreLastCheckedArtifact = false,
     isAllVersions,
     navigate,
     paginatedArtifacts,
@@ -245,7 +341,7 @@ export const checkForSelectedArtifact = debounce(
       if (
         artifacts &&
         searchBePage === configBePage &&
-        lastCheckedArtifactIdRef.current !== paramsId
+        (lastCheckedArtifactIdRef.current !== paramsId || ignoreLastCheckedArtifact)
       ) {
         lastCheckedArtifactIdRef.current = paramsId
 

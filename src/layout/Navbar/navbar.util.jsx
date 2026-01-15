@@ -43,7 +43,7 @@ import ModelMonitoringIcon from 'igz-controls/images/navbar/model-monitoring.svg
 
 // import RTPiplinesIcon from 'igz-controls/images/timer-outline-icon.svg?react'
 
-export const getLinks = (projectName, isDemoMode) => {
+export const getLinks = projectName => {
   const pathname = `/projects/${projectName}`
 
   return [
@@ -57,7 +57,8 @@ export const getLinks = (projectName, isDemoMode) => {
       icon: <HomepageIcon />,
       id: PROJECT_QUICK_ACTIONS_PAGE,
       label: 'Quick actions',
-      link: `${pathname}/${PROJECT_QUICK_ACTIONS_PAGE}`
+      link: `${pathname}/${PROJECT_QUICK_ACTIONS_PAGE}`,
+      hidden: true
     },
     {
       icon: <FeatureStoreIcon />,
@@ -81,8 +82,7 @@ export const getLinks = (projectName, isDemoMode) => {
       icon: <LLMPrompts />,
       id: LLM_PROMPTS_PAGE,
       label: 'LLM prompts',
-      link: `${pathname}/${LLM_PROMPTS_PAGE}`,
-      hidden: !isDemoMode
+      link: `${pathname}/${LLM_PROMPTS_PAGE}`
     },
     {
       icon: <ArtifactsIcon />,
@@ -100,8 +100,7 @@ export const getLinks = (projectName, isDemoMode) => {
       icon: <ModelMonitoringIcon />,
       id: 'monitoring-app',
       label: 'Monitoring app',
-      link: `${pathname}/monitoring-app`,
-      hidden: !isDemoMode
+      link: `${pathname}/monitoring-app`
     },
     {
       icon: <JobsWorkflowIcon />,

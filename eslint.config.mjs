@@ -3,6 +3,7 @@ import globals from 'globals'
 import js from '@eslint/js'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import eslintPluginImport from 'eslint-plugin-import'
 
 export default [
   { ignores: ['dist'] },
@@ -12,7 +13,11 @@ export default [
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2021,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.jest,
+        ...globals.node
+      },
       parserOptions: {
         ecmaFeatures: {
           jsx: true
@@ -21,7 +26,8 @@ export default [
     },
     plugins: {
       react: react,
-      'react-hooks': reactHooks
+      'react-hooks': reactHooks,
+      import: eslintPluginImport
     },
     settings: {
       react: {
@@ -34,11 +40,18 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/no-unescaped-entities': 'off',
       'import/no-anonymous-default-export': 'off',
+      'import/named': process.env.NODE_ENV === 'production' ? 2 : 1,
       'no-unused-vars': process.env.NODE_ENV === 'production' ? 2 : 1,
       'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 1,
       'no-console': process.env.NODE_ENV === 'production' ? 2 : 1,
       quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
       semi: ['error', 'never']
+    }
+  },
+  {
+    files: ["**/*.test.jsx"],
+    rules: {
+      "import/named": "off"
     }
   }
 ]

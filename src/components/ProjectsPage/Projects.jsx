@@ -39,10 +39,14 @@ import { BG_TASK_RUNNING } from '../../utils/poll.util'
 import { PROJECT_ONLINE_STATUS } from '../../constants'
 import { ConfirmDialog } from 'igz-controls/components'
 import { openPopUp } from 'igz-controls/utils/common.util'
-import { FORBIDDEN_ERROR_STATUS_CODE, PRIMARY_BUTTON } from 'igz-controls/constants'
+import {
+  FORBIDDEN_ERROR_STATUS_CODE,
+  NOTFOUND_ERROR_STATUS_CODE,
+  PRIMARY_BUTTON
+} from 'igz-controls/constants'
 import { fetchBackgroundTasks } from '../../reducers/tasksReducer'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { useMode } from '../../hooks/mode.hook'
 import { useNuclioMode } from '../../hooks/nuclioMode.hook'
 import {
@@ -211,7 +215,7 @@ const Projects = () => {
         .catch(error => {
           const customErrorMsg =
             error.response?.status === FORBIDDEN_ERROR_STATUS_CODE
-              ? `You don't have rights to archive project ${project.metadata.name}`
+              ? `You do not have permission to archive project ${project.metadata.name}`
               : `Failed to archive project ${project.metadata.name}`
 
           showErrorNotification(dispatch, error, '', customErrorMsg, () =>
@@ -231,6 +235,18 @@ const Projects = () => {
         .unwrap()
         .then(() => {
           fetchMinimalProjects()
+        })
+        .catch(error => {
+          const customErrorMsg =
+            error.response?.status === NOTFOUND_ERROR_STATUS_CODE
+              ? `Failed to unarchive project ${project.metadata.name}. The project was not found.`
+              : error.response?.status === FORBIDDEN_ERROR_STATUS_CODE
+                ? `You do not have permission to unarchive project ${project.metadata.name}`
+                : `Failed to unarchive project ${project.metadata.name}`
+
+          showErrorNotification(dispatch, error, '', customErrorMsg, () =>
+            handleUnarchiveProject(project)
+          )
         })
     },
     [dispatch, fetchMinimalProjects]
@@ -364,11 +380,8 @@ const Projects = () => {
   }, [refreshProjects])
 
   useEffect(() => {
-    const terminateRef = terminatePollRef
-
     return () => {
       abortControllerRef.current.abort()
-      terminateRef?.current?.()
     }
   }, [])
 

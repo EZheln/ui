@@ -21,11 +21,10 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import classnames from 'classnames'
 
-import ActionsMenu from '../../common/ActionsMenu/ActionsMenu'
 import AddEnvironmentVariablesRow from './AddEnvironmentVariablesRow'
 import EditableEnvironmentVariablesRow from './EditableEnvironmentVariablesRow'
 import PanelSection from '../PanelSection/PanelSection'
-import { Tooltip, TextTooltipTemplate } from 'igz-controls/components'
+import { Tooltip, TextTooltipTemplate, ActionsMenu } from 'igz-controls/components'
 
 import { tableHeaders } from './environmentVariables.util'
 
@@ -80,6 +79,7 @@ const EnvironmentVariablesView = ({
               <EditableEnvironmentVariablesRow
                 editEnvVariable={editEnvVariable}
                 envVariables={envVariables}
+                envVariable={envVariable}
                 key={index}
                 selectedEnvVariable={selectedEnvVariable}
                 setSelectedEnvVariable={setSelectedEnvVariable}

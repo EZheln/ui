@@ -30,10 +30,10 @@ import {
 } from 'igz-controls/utils/validation.util'
 
 import {
+  ABORTED_STATE,
   DATASETS_PAGE,
   DOCUMENTS_PAGE,
   FEATURE_SETS_TAB,
-  FEATURE_STORE_PAGE,
   FEATURE_VECTORS_TAB,
   FILES_PAGE,
   FUNCTION_TYPE_APPLICATION,
@@ -42,16 +42,16 @@ import {
   MODELS_TAB,
   TAG_LATEST
 } from '../../constants'
-import { formatDatetime, generateLinkPath, parseUri } from '../../utils'
-import { isArtifactTagUnique } from '../../utils/artifacts.util'
+import { generateLinkPath, parseUri } from '../../utils'
 import { getFunctionImage } from '../FunctionsPage/functions.util'
 import { openPopUp } from 'igz-controls/utils/common.util'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
 import {
   setChangesCounter,
   setChangesData,
   setFiltersWasHandled,
   showWarning
-} from '../../reducers/detailsReducer'
+} from 'igz-controls/reducers/commonDetailsReducer'
 
 export const generateArtifactsContent = (
   detailsType,
@@ -123,6 +123,14 @@ export const generateArtifactsContent = (
       db_key: {
         value: selectedItem.db_key
       },
+      model_artifact: {
+        value: !isEmpty(selectedItem?.parent_uri) ? parseUri(selectedItem.parent_uri).key : '',
+        shouldPopUp: !isEmpty(selectedItem?.parent_uri),
+        handleClick: () =>
+          openPopUp(ArtifactPopUp, {
+            artifactData: parseUri(selectedItem?.parent_uri)
+          })
+      },
       tag: {
         value: selectedItem.tag ?? '',
         editModeEnabled: true,
@@ -134,12 +142,6 @@ export const generateArtifactsContent = (
             name: 'common.tag',
             additionalRules: [
               {
-                name: 'tagUniqueness',
-                label: 'Tag name must be unique',
-                pattern: isArtifactTagUnique(projectName, detailsType, selectedItem),
-                async: true
-              },
-              {
                 name: 'latest',
                 label: 'Tag name "latest" is reserved',
                 pattern: value => value !== TAG_LATEST
@@ -147,10 +149,10 @@ export const generateArtifactsContent = (
             ]
           }
         },
-        handleDiscardChanges: (formState, detailsStore) => {
+        handleDiscardChanges: (formState, commonDetailsStore) => {
           formState.form.change(
             'tag',
-            detailsStore.changes.data.tag?.currentFieldValue ?? formState.initialValues.tag
+            commonDetailsStore.changes.data.tag?.currentFieldValue ?? formState.initialValues.tag
           )
         }
       },
@@ -159,9 +161,7 @@ export const generateArtifactsContent = (
       },
       kind: {
         value:
-          detailsType !== FEATURE_STORE_PAGE &&
-          detailsType !== FILES_PAGE &&
-          detailsType !== DATASETS_PAGE
+          detailsType !== FILES_PAGE && detailsType !== DATASETS_PAGE
             ? selectedItem.kind || ' '
             : null
       },
@@ -184,7 +184,18 @@ export const generateArtifactsContent = (
         copyToClipboard: true
       },
       metrics: {
-        value: selectedItem.metrics ?? []
+        fieldData: {
+          name: 'metrics'
+        },
+        editModeEnabled: false,
+        editModeType: 'chips',
+        validationRules: {
+          key: getValidationRules(
+            'artifact.labels.key',
+            getInternalLabelsValidationRule(internal_labels)
+          ),
+          value: getValidationRules('artifact.labels.value')
+        }
       },
       model_file: {
         value: selectedItem.model_file
@@ -211,7 +222,6 @@ export const generateArtifactsContent = (
         value: selectedItem.algorithm
       },
       labels: {
-        value: isEmpty(selectedItem.labels) ? [] : selectedItem.labels,
         fieldData: {
           name: 'labels'
         },
@@ -225,6 +235,9 @@ export const generateArtifactsContent = (
           ),
           value: getValidationRules('artifact.labels.value')
         }
+      },
+      description: {
+        value: selectedItem.description
       }
     }
   }
@@ -299,7 +312,7 @@ export const generateJobsContent = selectedItem => {
     startTime: {
       value: formatDatetime(
         selectedItem.startTime,
-        selectedItem.state?.value === 'aborted' ? 'N/A' : 'Not yet started'
+        selectedItem.state?.value === ABORTED_STATE ? 'N/A' : 'Not yet started'
       )
     },
     updated: {
@@ -308,14 +321,22 @@ export const generateJobsContent = selectedItem => {
     runOnSpot: {
       value: selectedItem.ui.runOnSpot
     },
-    nodeSelectorChips: {
-      value: selectedItem.nodeSelectorChips
+    nodeSelector: {
+      fieldData: {
+        name: 'nodeSelector'
+      },
+      editModeEnabled: false,
+      editModeType: 'chips'
     },
     priority: {
       value: selectedItem.ui.priority
     },
     parameters: {
-      value: selectedItem.parametersChips
+      fieldData: {
+        name: 'parameters'
+      },
+      editModeEnabled: false,
+      editModeType: 'chips'
     },
     handler: {
       value: selectedItem.handler
@@ -332,11 +353,19 @@ export const generateJobsContent = selectedItem => {
     functionTag: {
       value: selectedItem.ui?.functionTag ?? ''
     },
-    resultsChips: {
-      value: selectedItem.resultsChips
+    results: {
+      fieldData: {
+        name: 'results'
+      },
+      editModeEnabled: false,
+      editModeType: 'chips'
     },
     labels: {
-      value: isEmpty(selectedItem.labels) ? [] : selectedItem.labels
+      fieldData: {
+        name: 'labels'
+      },
+      editModeEnabled: false,
+      editModeType: 'chips'
     },
     logLevel: {
       value: selectedItem.logLevel
@@ -351,6 +380,12 @@ export const generateJobsContent = selectedItem => {
           : selectedItem.iterationStats?.length
             ? selectedItem.iterationStats.length - 1
             : 'N/A'
+    },
+    retryCountWithInitialAttempt: {
+      value: selectedItem.retryCountWithInitialAttempt
+    },
+    maxRetriesWithInitialAttempt: {
+      value: selectedItem.maxRetriesWithInitialAttempt
     }
   }
 }
@@ -407,16 +442,15 @@ export const generateFeatureSetsOverviewContent = (selectedItem, isDetailsPopUp)
     fieldData: {
       name: 'description'
     },
-    handleDiscardChanges: (formState, detailsStore) => {
+    handleDiscardChanges: (formState, commonDetailsStore) => {
       formState.form.change(
         'description',
-        detailsStore.changes.data.description?.currentFieldValue ??
+        commonDetailsStore.changes.data.description?.currentFieldValue ??
           formState.initialValues.description
       )
     }
   },
   labels: {
-    value: isEmpty(selectedItem.labels) ? [] : selectedItem.labels,
     editModeEnabled: !isDetailsPopUp,
     editModeType: 'chips',
     fieldData: {
@@ -462,16 +496,15 @@ export const generateFeatureVectorsOverviewContent = (selectedItem, isDetailsPop
     fieldData: {
       name: 'description'
     },
-    handleDiscardChanges: (formState, detailsStore) => {
+    handleDiscardChanges: (formState, commonDetailsStore) => {
       formState.form.change(
         'description',
-        detailsStore.changes.data.description?.currentFieldValue ??
+        commonDetailsStore.changes.data.description?.currentFieldValue ??
           formState.initialValues.description
       )
     }
   },
   labels: {
-    value: isEmpty(selectedItem.labels) ? [] : selectedItem.labels,
     editModeEnabled: !isDetailsPopUp,
     editModeType: 'chips',
     fieldData: {

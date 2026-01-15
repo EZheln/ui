@@ -24,12 +24,18 @@ import { Form } from 'react-final-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { createForm } from 'final-form'
 
-import ErrorMessage from '../../../common/ErrorMessage/ErrorMessage'
-import Loader from '../../../common/Loader/Loader'
-import { Button, FormChipCell, FormInput, FormTextarea, PopUpDialog } from 'igz-controls/components'
+import {
+  Button,
+  FormChipCell,
+  FormInput,
+  FormTextarea,
+  PopUpDialog,
+  ErrorMessage,
+  Loader
+} from 'igz-controls/components'
 
 import { PRIMARY_BUTTON, TERTIARY_BUTTON } from 'igz-controls/constants'
-import { getChipOptions } from '../../../utils/getChipOptions'
+import { getChipOptions } from 'igz-controls/utils/chips.util'
 import {
   getValidationRules,
   getInternalLabelsValidationRule
@@ -40,7 +46,7 @@ import { useModalBlockHistory } from '../../../hooks/useModalBlockHistory.hook'
 
 import './createProjectDialog.scss'
 
-const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject, isOpen = false}) => {
+const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject, isOpen = false }) => {
   const projectStore = useSelector(store => store.projectStore)
   const frontendSpec = useSelector(store => store.appStore.frontendSpec)
   const initialValues = {
@@ -57,10 +63,7 @@ const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject, isOpen
     })
   )
   const dispatch = useDispatch()
-  const { handleCloseModal } = useModalBlockHistory(
-    closeNewProjectPopUp,
-    formRef.current
-  )
+  const { handleCloseModal } = useModalBlockHistory(closeNewProjectPopUp, formRef.current)
 
   return (
     <PopUpDialog
@@ -95,7 +98,6 @@ const CreateProjectDialog = ({ closeNewProjectPopUp, handleCreateProject, isOpen
                   label="Labels"
                   name="labels"
                   shortChips
-                  visibleChipsMaxLength="2"
                   validationRules={{
                     key: getValidationRules(
                       'project.labels.key',

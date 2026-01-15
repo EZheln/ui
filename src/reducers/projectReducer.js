@@ -28,9 +28,15 @@ import {
 } from 'igz-controls/constants'
 import { DEFAULT_ABORT_MSG, PROJECT_ONLINE_STATUS, REQUEST_CANCELED } from '../constants'
 import { parseProjects } from '../utils/parseProjects'
-import { showErrorNotification } from '../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { parseSummaryData } from '../utils/parseSummaryData'
 import { mlrunUnhealthyErrors } from '../components/ProjectsPage/projects.util'
+import {
+  aggregateApplicationStatuses,
+  filterNuclioAppFunctions,
+  splitApplicationsContent
+} from '../utils/applications.utils'
+import { fetchNuclioFunctions } from './nuclioReducer'
 
 const initialState = {
   deletingProjects: {},
@@ -50,6 +56,7 @@ const initialState = {
     isUnhealthy: false,
     retrying: false
   },
+  accessibleProjectsMap: {},
   project: {
     data: null,
     error: null,
@@ -244,13 +251,27 @@ export const fetchProjectSecrets = createAsyncThunk(
     return projectsApi.getProjectSecrets(project).catch(error => thunkAPI.rejectWithValue(error))
   }
 )
-export const fetchProjectSummary = createAsyncThunk(
-  'fetchProjectSummary',
-  ({ project, signal }, thunkAPI) => {
-    return projectsApi
-      .getProjectSummary(project, signal)
-      .then(({ data }) => {
-        return parseSummaryData(data)
+export const fetchProjectSummaryAndNuclioFuncs = createAsyncThunk(
+  'fetchProjectSummaryAndNuclioFuncs',
+  ({ project, projectSummarySignal, functionsSignal }, thunkAPI) => {
+    return Promise.all([
+      projectsApi.getProjectSummary(project, projectSummarySignal),
+      thunkAPI.dispatch(fetchNuclioFunctions({ project, signal: functionsSignal })).unwrap()
+    ])
+      .then(([projectSummary, nuclioFunctions]) => {
+        const nuclioApplicationFunctions = filterNuclioAppFunctions(nuclioFunctions)
+        const parsedProjectSummary = parseSummaryData(projectSummary.data)
+        const { ready: runningAppsNumber, error: failedAppsNumber } = aggregateApplicationStatuses(
+          splitApplicationsContent(nuclioApplicationFunctions).applications
+        )
+
+        return {
+          ...parsedProjectSummary,
+          running_model_monitoring_functions:
+            runningAppsNumber ?? parsedProjectSummary.running_model_monitoring_functions,
+          failed_model_monitoring_functions:
+            failedAppsNumber ?? parsedProjectSummary.failed_model_monitoring_functions
+        }
       })
       .catch(error => {
         if (![REQUEST_CANCELED, DEFAULT_ABORT_MSG].includes(error.message)) {
@@ -261,7 +282,7 @@ export const fetchProjectSummary = createAsyncThunk(
 )
 export const fetchProjects = createAsyncThunk(
   'fetchProjects',
-  ({ params, setRequestErrorMessage = () => {} }, thunkAPI) => {
+  ({ params, setRequestErrorMessage = () => {}, showNotification = true }, thunkAPI) => {
     setRequestErrorMessage('')
 
     return projectsApi
@@ -270,14 +291,17 @@ export const fetchProjects = createAsyncThunk(
         return parseProjects(response.data.projects)
       })
       .catch(error => {
-        showErrorNotification(
-          thunkAPI.dispatch,
-          error,
-          'Failed to fetch projects',
-          null,
-          null,
-          setRequestErrorMessage
-        )
+        if (showNotification) {
+          showErrorNotification(
+            thunkAPI.dispatch,
+            error,
+            'Failed to fetch projects',
+            null,
+            null,
+            setRequestErrorMessage
+          )
+        }
+
         return thunkAPI.rejectWithValue(error)
       })
   }
@@ -374,6 +398,12 @@ const projectStoreSlice = createSlice({
     },
     setProjectTotalAlerts(state, action) {
       state.projectTotalAlerts = { ...action.payload }
+    },
+    setAccessibleProjectsMap(state, action) {
+      state.accessibleProjectsMap = {
+        ...state.accessibleProjectsMap,
+        ...action.payload
+      }
     }
   },
   extraReducers: builder => {
@@ -487,7 +517,7 @@ const projectStoreSlice = createSlice({
     })
     builder.addCase(fetchProjectSecrets.fulfilled, (state, action) => {
       state.project.secrets = {
-        data: action.payload,
+        data: action.payload.data,
         error: null,
         loading: false
       }
@@ -499,17 +529,17 @@ const projectStoreSlice = createSlice({
         loading: false
       }
     })
-    builder.addCase(fetchProjectSummary.pending, state => {
+    builder.addCase(fetchProjectSummaryAndNuclioFuncs.pending, state => {
       state.projectSummary.loading = true
     })
-    builder.addCase(fetchProjectSummary.fulfilled, (state, action) => {
+    builder.addCase(fetchProjectSummaryAndNuclioFuncs.fulfilled, (state, action) => {
       state.projectSummary = {
         data: action.payload,
         error: null,
         loading: false
       }
     })
-    builder.addCase(fetchProjectSummary.rejected, (state, action) => {
+    builder.addCase(fetchProjectSummaryAndNuclioFuncs.rejected, (state, action) => {
       state.projectSummary = {
         data: [],
         error: action.payload.message,
@@ -576,7 +606,8 @@ export const {
   setMlrunIsUnhealthy,
   setMlrunUnhealthyRetrying,
   setJobsMonitoringData,
-  setProjectTotalAlerts
+  setProjectTotalAlerts,
+  setAccessibleProjectsMap
 } = projectStoreSlice.actions
 
 export default projectStoreSlice.reducer

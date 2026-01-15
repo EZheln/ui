@@ -2,14 +2,15 @@
 
 .monitoring-application__statistics-section {
   display: flex;
-  gap: 15px;
   flex-direction: row;
-  margin-bottom: 25px;
+  gap: 15px;
   width: 100%;
+  margin-bottom: 25px;
 
   .monitoring-stats {
     flex: 1;
     padding: 15px;
+    border: 1px solid colors.$frenchLilac;
 
     &__alert {
       background-color: colors.$carouselPink;
@@ -20,22 +21,36 @@
       cursor: pointer;
     }
 
+    &__link:hover {
+      color: colors.$topaz;
+      text-decoration: underline;
+      text-underline-offset: 1px;
+      text-decoration-thickness: 1px;
+    }
+
     .stats-card__row:last-child {
       padding-bottom: 10px;
     }
 
     .stats__counter {
-      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: colors.$primary;
+      font-weight: 500;
       font-size: 28px;
+    }
+
+    .stats__failed > .stats__counter {
+      color: colors.$amaranth;
     }
 
     .stats__status {
       margin-bottom: 10px;
     }
 
-    .stats__subtitle {
-      margin-right: 5px;
+    [class^='state'] {
+      margin-left: 5px;
     }
   }
 }

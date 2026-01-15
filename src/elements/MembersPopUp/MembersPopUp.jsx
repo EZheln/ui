@@ -23,7 +23,7 @@ import { useDispatch } from 'react-redux'
 import { cloneDeep, debounce, groupBy } from 'lodash'
 
 import CheckBox from '../../common/CheckBox/CheckBox'
-import ChipInput from '../../common/ChipInput/ChipInput'
+import SuggestionsChips from '../../common/SuggestionsChips/SuggestionsChips'
 import Input from '../../common/Input/Input'
 import Select from '../../common/Select/Select'
 import MembersPopUpRow from './MembersPopUpRow'
@@ -36,7 +36,7 @@ import { getErrorMsg } from 'igz-controls/utils/common.util'
 import { getRoleOptions, initialNewMembersRole, DELETE_MODIFICATION } from './membersPopUp.util'
 import { isIgzVersionCompatible } from '../../utils/isIgzVersionCompatible'
 import { membersActions } from './membersReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 
 import { USER_GROUP_ROLE, USER_ROLE } from '../../constants'
 
@@ -79,11 +79,11 @@ const MembersPopUp = ({ changeMembersCallback, membersDispatch, membersState }) 
         existingMember.role = newMembersRole
       } else {
         membersCopy.push({
-          name: newMember.label,
-          id: newMember.id,
-          type: newMember.ui.type,
+          name: newMember.originalContent.label,
+          id: newMember.originalContent.id,
+          type: newMember.originalContent.ui.type,
           role: newMembersRole,
-          icon: newMember.ui.type === USER_ROLE ? <User /> : <Users />,
+          icon: newMember.originalContent.ui.type === USER_ROLE ? <User /> : <Users />,
           modification: 'post'
         })
       }
@@ -326,19 +326,14 @@ const MembersPopUp = ({ changeMembersCallback, membersDispatch, membersState }) 
             </div>
           </div>
           <div className="new-members-row">
-            <ChipInput
+            <SuggestionsChips
               className="new-member-name"
-              placeholder="Type to add members..."
-              addChip={suggestionItem => {
-                setNewMembers([...newMembers, suggestionItem])
-              }}
-              removeChip={chipIndex => {
-                setNewMembers(newMembers.filter((member, index) => index !== chipIndex))
-              }}
-              onInputChange={generateUsersSuggestionList}
               elements={newMembers}
+              placeholder="Type to add members..."
+              onInputChange={generateUsersSuggestionList}
+              initialMembers={membersState}
+              setElements={setNewMembers}
               suggestionList={newMembersSuggestionList}
-              isDeleteMode
             />
             <Select
               className="new-member-role"

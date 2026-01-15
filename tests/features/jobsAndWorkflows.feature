@@ -150,9 +150,9 @@ Feature: Jobs and workflows
         Then verify "Table_FilterBy_Button" element visibility on "Schedule_Monitor_Tab" wizard
         Then click on "Table_FilterBy_Button" element on "Schedule_Monitor_Tab" wizard
         Then "Title" element on "FilterBy_Popup" should contains "Filter by" value
-        Then verify "Type_Filter_Dropdown" element visibility on "FilterBy_Popup" wizard
-        Then verify "Type_Filter_Dropdown" dropdown on "FilterBy_Popup" wizard selected option value "All"
-        Then verify "Type_Filter_Dropdown" dropdown element on "FilterBy_Popup" wizard should contains "Dropdown_Options"."Scheduled_Type_Filter_Options"
+        Then verify "Type_Filter_Dropdown_Schedule" element visibility on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "All"
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown element on "FilterBy_Popup" wizard should contains "Dropdown_Options"."Scheduled_Type_Filter_Options"
         Then verify "Table_Label_Filter_Input" element visibility on "FilterBy_Popup" wizard
         Then verify "Clear_Button" element visibility on "FilterBy_Popup" wizard
         Then verify "Apply_Button" element visibility on "FilterBy_Popup" wizard
@@ -170,6 +170,61 @@ Feature: Jobs and workflows
         Then click on "Table_Refresh_Button" element on "Schedule_Monitor_Tab" wizard
         Then wait for 3 seconds
         Then verify "Schedule_Monitor_Table" element visibility on "Schedule_Monitor_Tab" wizard
+
+    @MLJW
+    @passive
+    @smoke
+    Scenario: MLJW092 - Check filter by Types options on Scheduled tab
+        Given open url
+        And wait load page
+        And click on row root with value "cat-vs-dog-classification" in "name" column in "Projects_Table" table on "Projects" wizard
+        And wait load page
+        When click on "Scheduled_Stats_Counter" element in "Scheduled_Stats_Container" on "Project" wizard
+        And wait load page
+        Then verify "Schedule" tab is active in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
+        Then verify "Table_Name_Filter_Input" element visibility on "Schedule_Monitor_Tab" wizard
+        Then verify "Date_Picker_Filter_Dropdown" element visibility on "Schedule_Monitor_Tab" wizard
+        Then verify "Date_Picker_Filter_Dropdown" dropdown on "Schedule_Monitor_Tab" wizard selected option value "Next 24 hours"
+        Then verify "Table_FilterBy_Button" element visibility on "Schedule_Monitor_Tab" wizard
+        Then click on "Table_FilterBy_Button" element on "Schedule_Monitor_Tab" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "All"
+        When select "Databricks" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "Databricks"
+        When select "Dask" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "Dask, Databricks"
+        When select "Horovod" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "3 items selected"
+        When select "Spark" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "4 items selected"
+        When select "Workflow" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "5 items selected"
+        Then click on "Apply_Button" element on "FilterBy_Popup" wizard
+        And wait load page
+        Then verify "Schedule_Monitor_Table" element visibility on "Schedule_Monitor_Tab" wizard
+        Then click on "Table_FilterBy_Button" element on "Schedule_Monitor_Tab" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "5 items selected"
+        When select "Job" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "All"
+        Then click on "Apply_Button" element on "FilterBy_Popup" wizard
+        And wait load page
+        Then verify "Schedule_Monitor_Table" element visibility on "Schedule_Monitor_Tab" wizard
+        Then click on "Table_FilterBy_Button" element on "Schedule_Monitor_Tab" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "All"
+        When select "Spark" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        When select "Horovod" option in "Type_Filter_Dropdown_Schedule" filter dropdown on "FilterBy_Popup" wizard
+        Then click on "Title" element on "FilterBy_Popup" wizard
+        Then verify "Type_Filter_Dropdown_Schedule" dropdown on "FilterBy_Popup" wizard selected option value "Spark, Horovod"
+        Then click on "Apply_Button" element on "FilterBy_Popup" wizard
+        And wait load page
+        And verify "No_Data_Message" element visibility on "commonPagesHeader" wizard
+        Then "No_Data_Message" component on "commonPagesHeader" should be equal "No_Data_Message"."Common_Message_Scheduled_Type"
 
     @MLJW
     @passive
@@ -209,6 +264,7 @@ Feature: Jobs and workflows
         Then verify "Jobs_Monitor_Table" element visibility on "Jobs_Monitor_Tab" wizard
         When pick up "Custom range" from "10/01/2021 00:00" to "11/30/2021 00:00" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
         And wait load page
+        And wait load page
         Then verify from "10/01/2021 00:00" to "11/30/2021 00:00" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         And wait load page
         Then verify "Jobs_Monitor_Table" element visibility on "Jobs_Monitor_Tab" wizard
@@ -226,13 +282,18 @@ Feature: Jobs and workflows
         And hover "MLRun_Logo" component on "commonPagesHeader" wizard
         And wait load page
         When pick up "Custom range" from "03/31/2014 10:30" to "03/21/2015 19:15" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify from "03/31/2014 10:30" to "03/21/2015 19:15" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         When pick up "Custom range" from "03/31/2044 10:30" to "03/21/2015 19:15" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify error message in "Date_Time_Picker" on "Jobs_Monitor_Tab" wizard with value "Date_Time_Picker"."Error_Message"
         Then click on "Table_Refresh_Button" element on "Jobs_Monitor_Tab" wizard
         When pick up "Custom range" from "03/31/2030 10:30" to "03/31/2030 10:31" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify from "03/31/2030 10:30" to "03/31/2030 10:31" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
+        And wait load page
         When pick up "Custom range" from "03/31/2025 10:31" to "03/21/2025 10:30" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify error message in "Date_Time_Picker" on "Jobs_Monitor_Tab" wizard with value "Date_Time_Picker"."Error_Message"
 
     @MLJW
@@ -368,6 +429,7 @@ Feature: Jobs and workflows
         And hover "MLRun_Logo" component on "commonPagesHeader" wizard
         And wait load page
         When pick up "Custom range" from "09/03/2021 00:00" to "09/04/2021 00:00" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify from "09/03/2021 00:00" to "09/04/2021 00:00" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         And wait load page
         Then click on "Table_FilterBy_Button" element on "Jobs_Monitor_Tab" wizard
@@ -442,6 +504,7 @@ Feature: Jobs and workflows
         And wait load page
         Then verify from "11/07/2021 17:00" to "11/08/2021 17:00" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         And wait load page
+        And wait load page
         Then value in "datetime" column in "Jobs_Monitor_Table" on "Jobs_Monitor_Tab" wizard should be from "11/07/2021 18:00" to "11/08/2021 18:00"
 
     @MLJW
@@ -461,6 +524,7 @@ Feature: Jobs and workflows
         When click on cell with row index 1 in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
         And wait load page
         When pick up "Custom range" from "01/01/2021 00:00" to "01/01/2023 00:00" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then verify from "01/01/2021 00:00" to "01/01/2023 00:00" filter band in "Custom_Range_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         And wait load page
         When click on cell with row index 1 in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
@@ -613,6 +677,7 @@ Feature: Jobs and workflows
     @MLJW
     @passive
     @smoke
+    #TODO: add data for verifying iteration filtering of artifacts on the Artifacts tab of the detail run
     Scenario: MLJW065 - Check all mandatory components in Item infopane on Artifacts tab on Jobs Monitor Page
         Given open url
         And wait load page
@@ -621,6 +686,7 @@ Feature: Jobs and workflows
         And hover "Project_Navigation_Toggler" component on "commonPagesHeader" wizard
         And click on cell with value "Jobs and workflows" in "link" column in "General_Info_Quick_Links" table on "commonPagesHeader" wizard
         And wait load page
+        And wait load page
         Then verify "Monitor Jobs" tab is active in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         When select "Any time" option in "Date_Picker_Filter_Dropdown" filter dropdown on "Jobs_Monitor_Tab" wizard
         Then click on "Table_FilterBy_Button" element on "Jobs_Monitor_Tab" wizard
@@ -628,7 +694,7 @@ Feature: Jobs and workflows
         Then click on "Title" element on "FilterBy_Popup" wizard
         Then click on "Apply_Button" element on "FilterBy_Popup" wizard
         And wait load page
-        When click on cell with value "trainer-train" in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
+        When click on cell with value "data_clean" in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
         And wait load page
         When click on cell with row index 1 in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
         And wait load page
@@ -640,21 +706,46 @@ Feature: Jobs and workflows
         Then click on cell with row index 1 in "name" column in "Artifacts_Table" table on "Artifacts_Info_Pane" wizard
         Then click on "Artifact_Preview_Button" element on "Artifacts_Info_Pane" wizard
         And wait load page
-        Then verify "Preview_Row" element visibility on "Artifact_Preview_Popup" wizard
-        Then verify "Cross_Cancel_Button" element visibility on "Artifact_Preview_Popup" wizard
-        Then click on "Cross_Cancel_Button" element on "Artifact_Preview_Popup" wizard
+        Then verify "Preview_Table" element visibility on "Preview_Popup" wizard
+        Then verify visibility of header column "name" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Name" header value in "name" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "path" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Path" header value in "path" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "size" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Size" header value in "size" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "updated" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Updated" header value in "updated" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then value in "name" column with "text" in "Preview_Table" on "Preview_Popup" wizard should contains "data_clean"
+        Then verify "Cross_Cancel_Button" element visibility on "Preview_Popup" wizard
+        Then verify "Download_Button" element visibility on "Preview_Popup" wizard
+        Then click on "Download_Button" element on "Preview_Popup" wizard
         And wait load page
+        And wait load page
+        Then verify "Download_Pop_Up" element visibility on "Downloads_Popup" wizard
+        And wait load page
+        Then verify "Download_Pop_Up_Cross_Cancel_Button" element visibility on "Downloads_Popup" wizard
+        And wait load page
+        Then verify "Header_Download_Pop_Up" element visibility on "Downloads_Popup" wizard
+        Then "Header_Download_Pop_Up" element on "Downloads_Popup" should contains "Downloads" value
+        Then click on "Download_Pop_Up_Cross_Cancel_Button" element on "Downloads_Popup" wizard
+        Then click on "Cross_Cancel_Button" element on "Preview_Popup" wizard
+        Then click on "Arrow_Back" element on "Jobs_Monitor_Tab_Info_Pane" wizard
+        And wait load page
+        When click on cell with value "trainer-train" in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
+        And wait load page
+        When click on cell with row index 1 in "name" column in "Jobs_Monitor_Table" table on "Jobs_Monitor_Tab" wizard
+        And wait load page
+        And select "Artifacts" tab in "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard
+        And wait load page
+        And verify "No_Data_Message" element visibility on "commonPagesHeader" wizard
+        Then "No_Data_Message" component on "commonPagesHeader" should contains "No_Data_Message"."No_Data"
         Then verify "Iterations_Dropdown" element visibility on "Artifacts_Info_Pane" wizard
         Then select "1" option in "Iterations_Dropdown" dropdown on "Artifacts_Info_Pane" wizard
         And wait load page
-        Then verify "Artifacts_Table" element visibility on "Artifacts_Info_Pane" wizard
-        Then click on cell with row index 1 in "name" column in "Artifacts_Table" table on "Artifacts_Info_Pane" wizard
-        Then click on "Artifact_Preview_Button" element on "Artifacts_Info_Pane" wizard
-        Then verify "Preview_Row" element visibility on "Artifact_Preview_Popup" wizard
-        Then click on "Cross_Cancel_Button" element on "Artifact_Preview_Popup" wizard
-        Then select "2" option in "Iterations_Dropdown" dropdown on "Artifacts_Info_Pane" wizard
+        Then select "5" option in "Iterations_Dropdown" dropdown on "Artifacts_Info_Pane" wizard
         And wait load page
-        Then verify "Artifacts_Table" element visibility on "Artifacts_Info_Pane" wizard
+        And verify "No_Data_Message" element visibility on "commonPagesHeader" wizard
+        Then "No_Data_Message" component on "commonPagesHeader" should contains "No_Data_Message"."No_Data"
     
     @MLJM
     @smoke
@@ -665,6 +756,7 @@ Feature: Jobs and workflows
         And wait load page
         And hover "Project_Navigation_Toggler" component on "commonPagesHeader" wizard
         And click on cell with value "Jobs and workflows" in "link" column in "General_Info_Quick_Links" table on "commonPagesHeader" wizard
+        And wait load page
         And wait load page
         Then verify "Monitor Jobs" tab is active in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         Then verify "BE_Pagination_Navigate_Prev" element visibility on "Pagination_Info_Pane" wizard
@@ -743,7 +835,7 @@ Feature: Jobs and workflows
         Then verify "Title" element visibility on "Modal_Transition_Popup" wizard
         Then "Title" element on "Modal_Transition_Popup" should contains "aggregate" value
         Then verify "Data_Status" element visibility on "Modal_Transition_Popup" wizard
-        Then "Data_Status" element on "Modal_Transition_Popup" should contains "Nov 25, 2021, 05:20:00 PM" value
+        Then "Data_Status" element on "Modal_Transition_Popup" should contains "Nov 25, 2021, 03:20:00 PM" value
         Then verify "State_Icon" element visibility on "Modal_Transition_Popup" wizard
         Then verify "State_Icon" element on "Modal_Transition_Popup" wizard should display hover tooltip "ML_Function_Info_Pane"."Initialized_State"
         Then verify "Refresh_Button" element visibility on "Modal_Transition_Popup" wizard
@@ -954,8 +1046,94 @@ Feature: Jobs and workflows
         Then verify "Workflows_Monitor_Table" element visibility on "Workflows_Monitor_Tab" wizard
         When click on cell with row index 1 in "name" column in "Workflows_Monitor_Table" table on "Workflows_Monitor_Tab" wizard
         And wait load page
+        Then verify "Terminate_Button" element visibility on "Workflows_Monitor_Tab" wizard
+        Then "Terminate_Button" element on "Workflows_Monitor_Tab" should contains "Terminate" value
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is disabled
+        Then verify "Toggle_View_Button" element visibility on "Workflows_Monitor_Tab" wizard
         Then click on "Toggle_View_Button" element on "Workflows_Monitor_Tab" wizard
+        And wait load page
         Then verify "Workflow_List_View_Table" element visibility on "Workflows_Monitor_Tab" wizard
+        Then verify "Terminate_Button" element visibility on "Workflows_Monitor_Tab" wizard
+        Then "Terminate_Button" element on "Workflows_Monitor_Tab" should contains "Terminate" value
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is disabled
+        When click on cell with row index 1 in "name" column in "Workflow_List_View_Table" table on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify "Header" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Updated" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Cross_Close_Button" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Info_Pane_Tab_Selector" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard should contains "Jobs_Monitor_Tab_Info_Pane"."Tab_List"
+        Then verify "Overview" tab is active in "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Terminate_Button" element visibility on "Workflows_Monitor_Tab" wizard
+        Then "Terminate_Button" element on "Workflows_Monitor_Tab" should contains "Terminate" value
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is disabled
+        Then select "project" with "stocks-admin" value in breadcrumbs menu
+        And wait load page
+        Then verify breadcrumbs "project" label should be equal "stocks-admin" value
+        When click on cell with row index 1 in "name" column in "Workflows_Monitor_Table" table on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify "Terminate_Button" element visibility on "Workflows_Monitor_Tab" wizard
+        Then "Terminate_Button" element on "Workflows_Monitor_Tab" should contains "Terminate" value
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is enabled
+        Then click on "Terminate_Button" element on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then "Title" element on "Confirm_Popup" should contains "Terminate workflow" value
+        Then verify "Cross_Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then verify "Confirm_Dialog_Message" element visibility on "Confirm_Popup" wizard
+        Then "Confirm_Dialog_Message" component on "Confirm_Popup" should be equal "Jobs_And_Workflows"."Terminate_Workflow_Message"
+        Then verify "Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then "Cancel_Button" element on "Confirm_Popup" should contains "Cancel" value
+        Then verify "Delete_Button" element visibility on "Confirm_Popup" wizard
+        Then "Delete_Button" element on "Confirm_Popup" should contains "Terminate" value
+        When click on "Cancel_Button" element on "Confirm_Popup" wizard
+        Then click on "Terminate_Button" element on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then verify "Cross_Cancel_Button" element visibility on "Confirm_Popup" wizard
+        When click on "Cross_Cancel_Button" element on "Confirm_Popup" wizard
+        And wait load page
+        When click on cell with row index 1 in "name" column in "Workflow_List_View_Table" table on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify "Header" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Updated" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Cross_Close_Button" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Info_Pane_Tab_Selector" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then verify "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard should contains "ML_Function_Info_Pane"."Tab_List"
+        Then verify "Overview" tab is active in "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard
+        Then click on "Terminate_Button" element on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then "Title" element on "Confirm_Popup" should contains "Terminate workflow" value
+        Then verify "Cross_Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then verify "Confirm_Dialog_Message" element visibility on "Confirm_Popup" wizard
+        Then "Confirm_Dialog_Message" component on "Confirm_Popup" should be equal "Jobs_And_Workflows"."Terminate_Workflow_Message"
+        Then verify "Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then "Cancel_Button" element on "Confirm_Popup" should contains "Cancel" value
+        Then verify "Delete_Button" element visibility on "Confirm_Popup" wizard
+        Then "Delete_Button" element on "Confirm_Popup" should contains "Terminate" value
+        When click on "Cancel_Button" element on "Confirm_Popup" wizard
+        And wait load page
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is enabled
+        Then click on "Terminate_Button" element on "Workflows_Monitor_Tab" wizard
+        And wait load page
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then verify "Delete_Button" element visibility on "Confirm_Popup" wizard
+        When click on "Delete_Button" element on "Confirm_Popup" wizard
+        And wait load page
+        Then verify if "Notification_Popup" popup dialog appears
+        Then verify "Notification_Pop_Up" element visibility on "Notification_Popup" wizard
+        Then "Notification_Pop_Up" component on "Notification_Popup" should contains "Jobs_And_Workflows"."Workflows_Trigger_Termination_Message"
+        Then verify "Notification_Pop_Up_Cross_Close_Button" element visibility on "Notification_Popup" wizard
+        Then click on "Notification_Pop_Up_Cross_Close_Button" element on "Notification_Popup" wizard
+        And wait load page
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is disabled
+        Then click on "Cross_Close_Button" element on "Jobs_Monitor_Tab_Info_Pane" wizard
+        And wait load page
+        Then verify "Workflow_List_View_Table" element visibility on "Workflows_Monitor_Tab" wizard
+        Then verify "Terminate_Button" element visibility on "Workflows_Monitor_Tab" wizard
+        Then "Terminate_Button" element on "Workflows_Monitor_Tab" should contains "Terminate" value
+        Then verify "Terminate_Button" element on "Workflows_Monitor_Tab" wizard is disabled
 
     @MLJW 
     @passive
@@ -1109,17 +1287,17 @@ Feature: Jobs and workflows
         Then verify "Step_1_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_2_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_3_Button" element on "commonPagesHeader" wizard is enabled
-        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Run details" value
         Then verify "Step_4_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_5_Button" element on "commonPagesHeader" wizard is enabled
-        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run details" value
         Then "Hyperparameter_Checkbox" element should be unchecked on "Modal_Wizard_Form" wizard
         Then verify "Run_Name_Input" element visibility on "Modal_Wizard_Form" wizard
         Then verify "Handler_Edit_Job" element visibility on "Modal_Wizard_Form" wizard
         Then verify "Handler_Edit_Job" element on "Modal_Wizard_Form" wizard is disabled
         Then verify "Labels_Table" element visibility on "Modal_Wizard_Form" wizard
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
-        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data Inputs" value
+        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data inputs" value
         Then verify "Data_Inputs_Headers" on "Modal_Wizard_Form" wizard should contains "Modal_Wizard_Form"."Data_Inputs_Table_Header"
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
         Then "Form_Header_Parameters" element on "commonPagesHeader" should contains "Parameters" value
@@ -1175,8 +1353,29 @@ Feature: Jobs and workflows
         Then click on cell with row index 1 in "name" column in "Artifacts_Table" table on "Artifacts_Info_Pane" wizard
         Then click on "Artifact_Preview_Button" element on "Artifacts_Info_Pane" wizard
         And wait load page
-        Then verify "Preview_Row" element visibility on "Artifact_Preview_Popup" wizard
-        Then verify "Cross_Cancel_Button" element visibility on "Artifact_Preview_Popup" wizard
+        Then verify "Preview_Table" element visibility on "Preview_Popup" wizard
+        Then verify visibility of header column "name" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Name" header value in "name" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "path" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Path" header value in "path" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "size" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Size" header value in "size" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then verify visibility of header column "updated" in "Preview_Table" table on "Preview_Popup" wizard
+        Then check "Updated" header value in "updated" column in "Preview_Table" table on "Preview_Popup" wizard
+        Then value in "name" column with "text" in "Preview_Table" on "Preview_Popup" wizard should contains "data_clean"
+        Then verify "Cross_Cancel_Button" element visibility on "Preview_Popup" wizard
+        Then verify "Download_Button" element visibility on "Preview_Popup" wizard
+        Then click on "Download_Button" element on "Preview_Popup" wizard
+        And wait load page
+        And wait load page
+        Then verify "Download_Pop_Up" element visibility on "Downloads_Popup" wizard
+        And wait load page
+        Then verify "Download_Pop_Up_Cross_Cancel_Button" element visibility on "Downloads_Popup" wizard
+        And wait load page
+        Then verify "Header_Download_Pop_Up" element visibility on "Downloads_Popup" wizard
+        Then "Header_Download_Pop_Up" element on "Downloads_Popup" should contains "Downloads" value
+        Then click on "Download_Pop_Up_Cross_Cancel_Button" element on "Downloads_Popup" wizard
+        Then click on "Cross_Cancel_Button" element on "Preview_Popup" wizard
 
     @MLJW
     @passive
@@ -1192,6 +1391,8 @@ Feature: Jobs and workflows
         And wait load page
         Then verify "Monitor Jobs" tab is active in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         When pick up "Custom range" from "09/01/2021 18:00" to "09/03/2021 18:00" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
+        And wait load page
         Then click on "Table_FilterBy_Button" element on "Jobs_Monitor_Tab" wizard
         Then select "Error" option in "Status_Filter_Dropdown" filter dropdown on "FilterBy_Popup" wizard
         Then click on "Title" element on "FilterBy_Popup" wizard
@@ -1207,6 +1408,7 @@ Feature: Jobs and workflows
         And wait load page
         Then verify options in action menu on "Jobs_Monitor_Tab" wizard in "Jobs_Monitor_Table" table with "Running" value in "status" column should contains "Jobs_And_Workflows"."Running_Job_Action_Menu_Options"
         When pick up "Custom range" from "08/28/2021 18:00" to "09/01/2021 18:00" in "Date_Time_Picker" via "Date_Picker_Filter_Dropdown" on "Jobs_Monitor_Tab" wizard
+        And wait load page
         Then click on "Table_FilterBy_Button" element on "Jobs_Monitor_Tab" wizard
         Then select "Running" option in "Status_Filter_Dropdown" filter dropdown on "FilterBy_Popup" wizard
         Then click on "Title" element on "FilterBy_Popup" wizard
@@ -1241,6 +1443,38 @@ Feature: Jobs and workflows
         And wait load page
         Then verify "Monitor Workflows" tab is active in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         Then verify options in action menu on "Workflows_Monitor_Tab" wizard in "Workflows_Monitor_Table" table with "Completed" value in "status" column should contains "Jobs_And_Workflows"."Workflows_Action_Menu_Options"
+        Then check that "Terminate" option in action menu on "Workflows_Monitor_Tab" wizard is disabled
+        Then select "project" with "stocks-admin" value in breadcrumbs menu
+        And wait load page
+        Then verify breadcrumbs "project" label should be equal "stocks-admin" value
+        Then verify options in action menu on "Workflows_Monitor_Tab" wizard in "Workflows_Monitor_Table" table with "Running" value in "status" column should contains "Jobs_And_Workflows"."Workflows_Running_Action_Menu_Options"
+        Then check that "Terminate" option in action menu on "Workflows_Monitor_Tab" wizard is enabled
+        Then select "Terminate" option in action menu on "Workflows_Monitor_Tab" wizard in "Workflows_Monitor_Table" table at row with "main 2021-08-30 05-36-35" value in "name" column
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then "Title" element on "Confirm_Popup" should contains "Terminate workflow" value
+        Then verify "Cross_Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then verify "Confirm_Dialog_Message" element visibility on "Confirm_Popup" wizard
+        Then "Confirm_Dialog_Message" component on "Confirm_Popup" should be equal "Jobs_And_Workflows"."Terminate_Workflow_Message"
+        Then verify "Cancel_Button" element visibility on "Confirm_Popup" wizard
+        Then "Cancel_Button" element on "Confirm_Popup" should contains "Cancel" value
+        Then verify "Delete_Button" element visibility on "Confirm_Popup" wizard
+        Then "Delete_Button" element on "Confirm_Popup" should contains "Terminate" value
+        When click on "Cancel_Button" element on "Confirm_Popup" wizard
+        Then select "Terminate" option in action menu on "Workflows_Monitor_Tab" wizard in "Workflows_Monitor_Table" table at row with "main 2021-08-30 05-36-35" value in "name" column
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then verify "Cross_Cancel_Button" element visibility on "Confirm_Popup" wizard
+        When click on "Cross_Cancel_Button" element on "Confirm_Popup" wizard
+        Then select "Terminate" option in action menu on "Workflows_Monitor_Tab" wizard in "Workflows_Monitor_Table" table at row with "main 2021-08-30 05-36-35" value in "name" column
+        Then verify if "Confirm_Popup" popup dialog appears
+        Then verify "Delete_Button" element visibility on "Confirm_Popup" wizard
+        When click on "Delete_Button" element on "Confirm_Popup" wizard
+        And wait load page
+        And wait load page
+        Then verify if "Notification_Popup" popup dialog appears
+        Then verify "Notification_Pop_Up" element visibility on "Notification_Popup" wizard
+        Then "Notification_Pop_Up" component on "Notification_Popup" should contains "Jobs_And_Workflows"."Workflows_Trigger_Termination_Message"
+        Then verify "Notification_Pop_Up_Cross_Close_Button" element visibility on "Notification_Popup" wizard
+        Then click on "Notification_Pop_Up_Cross_Close_Button" element on "Notification_Popup" wizard
 
     @MLJW
     @passive
@@ -1281,17 +1515,17 @@ Feature: Jobs and workflows
         Then verify "Step_1_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_2_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_3_Button" element on "commonPagesHeader" wizard is enabled
-        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Run details" value
         Then verify "Step_4_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Step_5_Button" element on "commonPagesHeader" wizard is enabled
-        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run details" value
         Then "Hyperparameter_Checkbox" element should be unchecked on "Modal_Wizard_Form" wizard
         Then verify "Run_Name_Input" element visibility on "Modal_Wizard_Form" wizard
         Then verify "Handler_Edit_Job" element visibility on "Modal_Wizard_Form" wizard
         Then verify "Handler_Edit_Job" element on "Modal_Wizard_Form" wizard is disabled
         Then verify "Labels_Table" element visibility on "Modal_Wizard_Form" wizard
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
-        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data Inputs" value
+        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data inputs" value
         Then verify "Data_Inputs_Headers" on "Modal_Wizard_Form" wizard should contains "Modal_Wizard_Form"."Data_Inputs_Table_Header"
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
         Then "Form_Header_Parameters" element on "commonPagesHeader" should contains "Parameters" value
@@ -1324,7 +1558,6 @@ Feature: Jobs and workflows
         Then "Save_Button" element on "Modal_Wizard_Form" should contains "Save" value
 
     @MLJW
-    #TODO: arrow lines position - y not found
     @passive
     @smoke
     Scenario: MLJW081 - Check visibility of main components on Workflow graph View
@@ -1341,7 +1574,7 @@ Feature: Jobs and workflows
         When click on cell with row index 1 in "name" column in "Workflows_Monitor_Table" table on "Workflows_Monitor_Tab" wizard
         And wait load page
         Then verify "Workflow_Graph" element visibility on "Workflows_Monitor_Tab" wizard
-        # Then verify arrow lines position on "Workflow_Graph" on "Workflows_Monitor_Tab" wizard
+        Then verify workflow graph nodes and arrows connections on "Workflow_Graph" on "Workflows_Monitor_Tab" wizard
         When click on node with index 2 in "Workflow_Graph" graph on "Workflows_Monitor_Tab" wizard
         And wait load page
         Then verify "Header" element visibility on "Jobs_Monitor_Tab_Info_Pane" wizard
@@ -1382,7 +1615,7 @@ Feature: Jobs and workflows
         Then "Notification_Pop_Up" element on "Notification_Popup" should contains "The batch run was started" value
         Then verify "Notification_Pop_Up_Cross_Close_Button" element visibility on "Notification_Popup" wizard
         Then click on "Notification_Pop_Up_Cross_Close_Button" element on "Notification_Popup" wizard
-        When click on cell with value "test-m_ingest" in "name" column in "Jobs_And_Workflows" table on "Project" wizard
+        When click on cell with value "test-m_ingest" in "name" column in "Runs_Statistic_Table" table on "Project" wizard
         And wait load page
         Then verify "Overview" tab is active in "Info_Pane_Tab_Selector" on "Jobs_Monitor_Tab_Info_Pane" wizard
         When click on "link" value where option is "Function:" in "Overview_Headers" on "Jobs_Monitor_Tab_Info_Pane" wizard
@@ -1454,7 +1687,7 @@ Feature: Jobs and workflows
         And hover "Project_Navigation_Toggler" component on "commonPagesHeader" wizard
         Then click on "Project_Monitoring_Button" element on "commonPagesHeader" wizard
         And hover "MLRun_Logo" component on "commonPagesHeader" wizard
-        When click on cell with value "test-m_ingest" in "name" column in "Jobs_And_Workflows" table on "Project" wizard
+        When click on cell with value "test-m_ingest" in "name" column in "Runs_Statistic_Table" table on "Project" wizard
         And wait load page
         When click on "link" value where option is "Function:" in "Overview_Headers" on "Jobs_Monitor_Tab_Info_Pane" wizard
         And wait load page
@@ -1473,6 +1706,7 @@ Feature: Jobs and workflows
         And wait load page
         And hover "Project_Navigation_Toggler" component on "commonPagesHeader" wizard
         And click on cell with value "Jobs and workflows" in "link" column in "General_Info_Quick_Links" table on "commonPagesHeader" wizard
+        And wait load page
         And wait load page
         And select "Schedule" tab in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         And wait load page
@@ -1547,6 +1781,7 @@ Feature: Jobs and workflows
         And wait load page
         And hover "Project_Navigation_Toggler" component on "commonPagesHeader" wizard
         And click on cell with value "Jobs and workflows" in "link" column in "General_Info_Quick_Links" table on "commonPagesHeader" wizard
+        And wait load page
         And wait load page
         And select "Schedule" tab in "Jobs_Tab_Selector" on "Jobs_Monitor_Tab" wizard
         And wait load page
@@ -1642,7 +1877,7 @@ Feature: Jobs and workflows
         And wait load page
         Then verify redirection from "projects/default/jobs/monitor-jobs/aggregate-test/864f4da42773494eb94dce1c8834feb6/resultsINVALID?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1" to "projects/default/jobs/monitor-jobs/aggregate-test/864f4da42773494eb94dce1c8834feb6/overview?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1"
         And wait load page
-        Then verify redirection from "projects/default/jobs/monitor-jobs/aggregate-test/INVALID/overview?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1" to "projects/default/jobs/monitor-jobs/aggregate-test/INVALID/overview?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1"
+        Then verify redirection from "projects/default/jobs/monitor-jobs/aggregate-test/INVALID/overview?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1" to "projects/default/jobs/monitor-jobs/aggregate-test?dates=anyTime&savedParams=P2JlUGFnZT0xJmZlUGFnZT0xJmRhdGVzPWFueVRpbWU%3D&bePage=1&fePage=1"
         And wait load page
         Then verify if "Notification_Popup" popup dialog appears
         Then verify "Notification_Pop_Up" element visibility on "Notification_Popup" wizard
@@ -1733,11 +1968,11 @@ Feature: Jobs and workflows
         Then "Form_Header_Function_Selection" element on "commonPagesHeader" should contains "Function selection" value
         Then verify "Function_Selection_Tabs" on "Modal_Wizard_Form" wizard should contains "Modal_Wizard_Form"."Tab_List"
         Then verify "Step_1_Button" element on "commonPagesHeader" wizard is enabled
-        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Function Selection" value
+        Then "Step_1_Button_text" element on "commonPagesHeader" should contains "Function selection" value
         Then verify "Step_2_Button" element on "commonPagesHeader" wizard is disabled
-        Then "Step_2_Button_text" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Step_2_Button_text" element on "commonPagesHeader" should contains "Run details" value
         Then verify "Step_3_Button" element on "commonPagesHeader" wizard is disabled
-        Then "Step_3_Button_text" element on "commonPagesHeader" should contains "Data Inputs" value
+        Then "Step_3_Button_text" element on "commonPagesHeader" should contains "Data inputs" value
         Then verify "Step_4_Button" element on "commonPagesHeader" wizard is disabled
         Then "Step_4_Button_text" element on "commonPagesHeader" should contains "Parameters" value
         Then verify "Step_5_Button" element on "commonPagesHeader" wizard is disabled
@@ -1844,7 +2079,7 @@ Feature: Jobs and workflows
 
     @MLJW
     @smoke
-    Scenario: MLJW042 - Check all mandatory components on Batch Run wizard - Run Details without Method
+    Scenario: MLJW042 - Check all mandatory components on Batch Run wizard - Run details without Method
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -1867,7 +2102,7 @@ Feature: Jobs and workflows
         Then "Step_5_Button_text" element on "commonPagesHeader" should contains "Resources" value
         Then verify "Step_6_Button" element on "commonPagesHeader" wizard is enabled
         Then verify "Form_Header_Run_Details" element visibility on "commonPagesHeader" wizard
-        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run details" value
         Then verify "Hyperparameter_Checkbox" element visibility on "Modal_Wizard_Form" wizard
         Then "Hyperparameter_Checkbox" element should be unchecked on "Modal_Wizard_Form" wizard
         Then check "Hyperparameter_Checkbox" element on "Modal_Wizard_Form" wizard
@@ -1940,7 +2175,7 @@ Feature: Jobs and workflows
 
     @MLJW
     @smoke
-    Scenario: MLJW051 - Check all mandatory components on Batch Run wizard - Run Details with Method
+    Scenario: MLJW051 - Check all mandatory components on Batch Run wizard - Run details with Method
         Given open url
         And wait load page
         And click on row root with value "churn-project-admin" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -1958,7 +2193,7 @@ Feature: Jobs and workflows
         Then "Function_Title" element on "Modal_Wizard_Form" should contains "clean-data" value
         Then verify "Run_Name_Field" on "Modal_Wizard_Form" wizard should contains "clean-data" value
         Then verify "Form_Header_Run_Details" element visibility on "commonPagesHeader" wizard
-        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run Details" value
+        Then "Form_Header_Run_Details" element on "commonPagesHeader" should contains "Run details" value
         Then verify "Hyperparameter_Checkbox" element visibility on "Modal_Wizard_Form" wizard
         Then "Hyperparameter_Checkbox" element should be unchecked on "Modal_Wizard_Form" wizard
         Then verify "Run_Name_Input" element visibility on "Modal_Wizard_Form" wizard
@@ -1991,7 +2226,7 @@ Feature: Jobs and workflows
 
     @MLJW
     @smoke
-    Scenario: MLJW053 - Check changing "Method" after "Hyperparameter" check in Run Details section of Batch Run
+    Scenario: MLJW053 - Check changing "Method" after "Hyperparameter" check in Run details section of Batch Run
         Given open url
 	    And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -2016,7 +2251,7 @@ Feature: Jobs and workflows
 
     @MLJW
     @smoke
-    Scenario: MLJW054 - Check "Image name" field in Run Details section of Batch Run
+    Scenario: MLJW054 - Check "Image name" field in Run details section of Batch Run
         Given open url
 	    And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -2039,7 +2274,7 @@ Feature: Jobs and workflows
 
     @MLJW
     @smoke
-    Scenario: MLJW039 - Check all mandatory components on Batch Run wizard - Data Inputs
+    Scenario: MLJW039 - Check all mandatory components on Batch Run wizard - Data inputs
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -2065,7 +2300,7 @@ Feature: Jobs and workflows
         Then verify "Step_6_Button" element on "commonPagesHeader" wizard is enabled
         Then "Title" element on "Modal_Wizard_Form" should contains "Batch Run" value
         Then verify "Form_Header_Data_Inputs" element visibility on "commonPagesHeader" wizard
-        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data Inputs" value
+        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data inputs" value
         Then verify "Data_Inputs_Headers" on "Modal_Wizard_Form" wizard should contains "Modal_Wizard_Form"."Data_Inputs_Table_Header"
         When add data to "Data_Inputs_Table" table on "Modal_Wizard_Form" wizard with a pre-filled table
             | name_input | path_dropdown |      path_input     |
@@ -2116,6 +2351,7 @@ Feature: Jobs and workflows
         Then select "Hub" tab in "Function_Selection_Tabs" on "Modal_Wizard_Form" wizard
         And wait load page
         And click on row root with value "auto-trainer" in "name" column in "Functions_Table" table on "Modal_Wizard_Form" wizard
+        And wait load page
         Then "Function_Title" element on "Modal_Wizard_Form" should contains "auto-trainer" value
         Then verify "Next_Button" element on "Modal_Wizard_Form" wizard is enabled
         And click on "Step_4_Button" element on "commonPagesHeader" wizard
@@ -2429,7 +2665,7 @@ Feature: Jobs and workflows
         When click on "Delete_New_Row_Button" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard
         When add new volume rows to "Volume_Paths_Table" table in "Resources_Accordion" on "Modal_Wizard_Form" wizard using nontable inputs
             | Volume_Paths_Table_Type_Dropdown | Volume_Paths_Table_Volume_Name_Input | Volume_Paths_Table_Path_Input | Volume_Paths_Table_Config_Map_Input | Add_New_Row_Button |
-            |           Config Map             |                                      |                               |                                     |         yes        |
+            |           Config map             |                                      |                               |                                     |         yes        |
         Then verify "Volume_Paths_Table_Volume_Name_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Config_Map_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
@@ -2440,7 +2676,7 @@ Feature: Jobs and workflows
             |             Secret               |                                      |                               |                                      |         yes        |
         Then verify "Volume_Paths_Table_Volume_Name_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
-        Then verify "Volume_Paths_Table_Secret_Name_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hover warning "Input_Hint"."Input_Field_Require"
+        Then verify "Volume_Paths_Table_Secret_Name_Input" in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display options "Input_Hint"."Secret_Name_Rule_Options"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard should display hint "Input_Hint"."Mount_Path_Hint"
         When click on "Delete_New_Row_Button" element in "Resources_Accordion" on "Modal_Wizard_Form" wizard
         When add new volume rows to "Volume_Paths_Table" table in "Resources_Accordion" on "Modal_Wizard_Form" wizard using nontable inputs
@@ -2502,7 +2738,7 @@ Feature: Jobs and workflows
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
         And click on "Next_Button" element on "Modal_Wizard_Form" wizard
         Then "Title" element on "Modal_Wizard_Form" should contains "Batch Run" value
-        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data Inputs" value
+        Then "Form_Header_Data_Inputs" element on "commonPagesHeader" should contains "Data inputs" value
         When add data to "Data_Inputs_Table" table on "Modal_Wizard_Form" wizard with combobox
             |    name_input   | path_dropdown | path_dropdown_autocomplete_artifacts | path_dropdown_autocomplete_project | path_dropdown_autocomplete_item | path_dropdown_autocomplete_tag |
             |     artifacts   |  MLRun store  |               Artifacts              |     default (Current project)      |        download_content         |            #0:latest           |
@@ -2790,6 +3026,7 @@ Feature: Jobs and workflows
         And wait load page
         Then value in "status" column with "tooltip" in "Jobs_Monitor_Table" on "Jobs_Monitor_Tab" wizard should contains "Aborting"
         Then wait for 10 seconds
+        Then click on "Table_Refresh_Button" element on "Jobs_Monitor_Tab" wizard
         Then verify "Notification_Pop_Up" element visibility on "Notification_Popup" wizard
         And wait load page
         Then "Notification_Pop_Up" element on "Notification_Popup" should contains "Job erann-test (...e19ea57) was aborted" value
@@ -2804,8 +3041,7 @@ Feature: Jobs and workflows
     @MLJW
     @passive
     @smoke
-    # retry action is using KFP API and so this can’t be implemented in the mock - https://iguazio.atlassian.net/browse/ML-9124
-    #TODO: need to add check Retry option for error and running status
+    #TODO: need to add check Retry option for error and running status, add check for retryed job visibility
     Scenario: MLJW087 - Check Retry option in action menu on Workflows Monitor tab
         Given open url
         And wait load page
@@ -2823,9 +3059,7 @@ Feature: Jobs and workflows
         And wait load page
         Then verify if "Notification_Popup" popup dialog appears
         Then verify "Notification_Pop_Up" element visibility on "Notification_Popup" wizard
-        Then "Notification_Pop_Up" component on "Notification_Popup" should contains "Jobs_And_Workflows"."Workflows_Unsuccessful_Run_Message"
-        Then verify "Retry_Button" element visibility on "Notification_Popup" wizard
-        Then "Retry_Button" element on "Notification_Popup" should contains "RETRY" value
+        Then "Notification_Pop_Up" component on "Notification_Popup" should contains "Jobs_And_Workflows"."Workflows_Successful_Run_Message"
         Then verify "Notification_Pop_Up_Cross_Close_Button" element visibility on "Notification_Popup" wizard
         Then click on "Notification_Pop_Up_Cross_Close_Button" element on "Notification_Popup" wizard
 

@@ -17,13 +17,18 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import { TextTooltipTemplate, Tooltip } from 'igz-controls/components'
-import CopyToClipboard from '../common/CopyToClipboard/CopyToClipboard'
+import { TextTooltipTemplate, Tooltip, CopyToClipboard } from 'igz-controls/components'
 import Download from '../common/Download/Download'
 
 import api from '../api/artifacts-api'
 import { createArtifactPreviewContent } from './createArtifactPreviewContent'
-import { ARTIFACT_MAX_CHUNK_SIZE, DEFAULT_ABORT_MSG, REQUEST_CANCELED } from '../constants'
+import {
+  ARTIFACT_MAX_CHUNK_SIZE,
+  DEFAULT_ABORT_MSG,
+  ERROR_STATE,
+  REQUEST_CANCELED,
+  UNKNOWN_STATE
+} from '../constants'
 
 const fileSizes = {
   '100KB': 102400,
@@ -165,7 +170,7 @@ export const fetchArtifactPreviewFromPath = async (
                   : 'preview, use the download option instead'
               }`
             },
-            type: 'unknown'
+            type: UNKNOWN_STATE
           }
         ])
       } else {
@@ -196,7 +201,7 @@ export const fetchArtifactPreviewFromPath = async (
             body: err.response ? JSON.stringify(err.response, null, 2) : ''
           },
           content: [],
-          type: 'error'
+          type: ERROR_STATE
         }
       ])
     }

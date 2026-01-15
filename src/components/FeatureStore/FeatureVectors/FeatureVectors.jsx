@@ -59,13 +59,12 @@ import { getScssVariableValue } from 'igz-controls/utils/common.util'
 import { isDetailsTabExists } from '../../../utils/link-helper.util'
 import { parseFeatureVectors } from '../../../utils/parseFeatureVectors'
 import { setFeaturesPanelData } from '../../../reducers/tableReducer'
-import { setNotification } from '../../../reducers/notificationReducer'
-import { showErrorNotification } from '../../../utils/notifications.util'
-import { sortListByDate } from '../../../utils'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
+import { sortListByDate } from 'igz-controls/utils/datetime.util'
 import { useFiltersFromSearchParams } from '../../../hooks/useFiltersFromSearchParams.hook'
 import { useGroupContent } from '../../../hooks/groupContent.hook'
 import { useInitialTableFetch } from '../../../hooks/useInitialTableFetch.hook'
-import { useMode } from '../../../hooks/mode.hook'
 import { useOpenPanel } from '../../../hooks/openPanel.hook'
 import { useVirtualization } from '../../../hooks/useVirtualization.hook'
 
@@ -89,7 +88,6 @@ const FeatureVectors = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
-  const { isDemoMode } = useMode()
 
   const {
     createVectorPopUpIsOpen,
@@ -111,10 +109,7 @@ const FeatureVectors = () => {
     () => getScssVariableValue('--featureVectorsHeaderRowHeight'),
     []
   )
-  const pageData = useMemo(
-    () => generatePageData(selectedFeatureVector, isDemoMode),
-    [isDemoMode, selectedFeatureVector]
-  )
+  const pageData = useMemo(() => generatePageData(selectedFeatureVector), [selectedFeatureVector])
 
   const detailsFormInitialValues = useMemo(
     () => generateDetailsFormInitialValue(selectedFeatureVector, frontendSpec.internal_labels),
@@ -249,8 +244,8 @@ const FeatureVectors = () => {
   )
 
   const actionsMenu = useMemo(
-    () => generateActionsMenu(onDeleteFeatureVector, toggleConvertedYaml),
-    [onDeleteFeatureVector, toggleConvertedYaml]
+    () => generateActionsMenu(dispatch, onDeleteFeatureVector, toggleConvertedYaml),
+    [onDeleteFeatureVector, toggleConvertedYaml, dispatch]
   )
 
   const handleRefresh = useCallback(

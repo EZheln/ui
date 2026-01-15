@@ -193,6 +193,7 @@ const realTimePipelinesTable = {
           )
         },
         name: '.table-body__cell:nth-of-type(1) a.data-ellipsis',
+        name_link: '.table-body__cell:nth-of-type(1) a .link',
         type: '.table-body__cell:nth-of-type(2) .data-ellipsis',
         function: '.table-body__cell:nth-of-type(3) .data-ellipsis',
         action_menu: {
@@ -215,11 +216,12 @@ const realTimePipelinesGraph = {
         body: {
           root: '.react-flow__nodes',
           row: {
-            root: '.react-flow__node-ml-node',
+            root: '.react-flow__node',
             fields: {
-              name: '.react-flow__node-label .data-ellipsis .data-ellipsis',
+              name: '.react-flow__node-label .data-ellipsis',
               top_handler: '.data-ellipsis .react-flow__handle-top',
-              bottom_handler: '.data-ellipsis .react-flow__handle-bottom'
+              bottom_handler: '.data-ellipsis .react-flow__handle-bottom',
+              node_title: '.react-flow__node-chips-title'
             }
           }
         }
@@ -231,7 +233,7 @@ const realTimePipelinesGraph = {
         root: '',
         header: {},
         body: {
-          root: '.react-flow__edges g[transform]',
+          root: '.react-flow__edges g',
           row: {
             root: '.react-flow__edge',
             fields: {
@@ -257,7 +259,7 @@ const tableNameFilterInput = inputGroup(
   )
 )
 
-module.exports = {
+export default {
   modelsTab: {
     Delete_Artifact_Popup: By.css('[data-testid="pop-up-dialog"]'),
     Models_Tab_Selector: commonTable(tabSelector),
@@ -292,6 +294,14 @@ module.exports = {
     Table_Name_Filter_Input: tableNameFilterInput,
     Table_Refresh_Button: tableRefreshButton,
     Real_Time_Pipelines_Table: commonTable(realTimePipelinesTable),
-    Real_Time_Pipelines_Graph: graph(realTimePipelinesGraph)
+    Real_Time_Pipelines_Graph: graph(realTimePipelinesGraph),
+    Pipeline_Back_Button: By.css('[data-testid="pipeline-back-btn-tooltip-wrapper"]'),
+    Pipeline_Link_Title: By.css('.pipeline-container .link-back__title'),
+    Model_Runner_Step_Icon: By.css('.react-flow__node-ml-model-runner-node .react-flow__node-header .react-flow__node-header-icon'),
+    Model_Runner_Step_Label: By.css('.react-flow__node-ml-model-runner-node .react-flow__node-header-title .react-flow__node-header-label'),
+    Model_Runner_Step_Sub_Label: By.css('.react-flow__node-ml-model-runner-node .react-flow__node-header-title .react-flow__node-header-sub-label'),
+    Model_Runner_Monitoring_Icon: By.css('.react-flow__node-ml-model-runner-node .react-flow__node-header .react-flow__node-header-monitoring-icon'),
+    Model_Runner_Chips_Title: By.css('.react-flow__node-ml-model-runner-node div.react-flow__node-chips-title'),
+    Model_Runner_Chip_Container: By.css('.react-flow__node-ml-model-runner-node [data-testid="runningModels-chips"] .chip-block .edit-chip-container'),
   }
 }

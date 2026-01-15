@@ -17,7 +17,7 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
 import { useLocation } from 'react-router-dom'
@@ -25,10 +25,9 @@ import { v4 as uuidv4 } from 'uuid'
 import { Form } from 'react-final-form'
 import { createForm } from 'final-form'
 import arrayMutators from 'final-form-arrays'
-import { isEmpty } from 'lodash'
 
 import RegisterArtifactModalForm from '../../elements/RegisterArtifactModalForm/RegisterArtifactModalForm'
-import { Button, Modal, ConfirmDialog } from 'igz-controls/components'
+import { Button, Modal, Loader } from 'igz-controls/components'
 
 import {
   FORBIDDEN_ERROR_STATUS_CODE,
@@ -39,12 +38,11 @@ import {
 import artifactApi from '../../api/artifacts-api'
 import { ARTIFACT_TYPE } from '../../constants'
 import { convertChipsData } from '../../utils/convertChipsData'
-import { createArtifactMessages } from '../../utils/createArtifact.util'
+import { getArtifactMessagesByKind } from '../../utils/createArtifact.util'
 import { setFieldState, isSubmitDisabled } from 'igz-controls/utils/form.util'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
-import { openPopUp } from 'igz-controls/utils/common.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
 import { useModalBlockHistory } from '../../hooks/useModalBlockHistory.hook'
+import { processActionAfterTagUniquesValidation } from '../../utils/artifacts.util'
 
 const RegisterArtifactModal = ({
   actions = null,
@@ -55,6 +53,7 @@ const RegisterArtifactModal = ({
   refresh,
   title
 }) => {
+  const [isLoading, setIsLoading] = useState(false)
   const initialValues = {
     kind: artifactKind,
     metadata: {
@@ -82,7 +81,7 @@ const RegisterArtifactModal = ({
   const dispatch = useDispatch()
   const { handleCloseModal, resolveModal } = useModalBlockHistory(onResolve, formRef.current)
   const messagesByKind = useMemo(() => {
-    return createArtifactMessages[artifactKind.toLowerCase()]
+    return getArtifactMessagesByKind(artifactKind)
   }, [artifactKind])
 
   const registerArtifact = values => {
@@ -124,50 +123,21 @@ const RegisterArtifactModal = ({
       })
     }
 
-    return artifactApi
-      .getExpandedArtifact(params.projectName, values.metadata.key, values.metadata.tag ?? 'latest')
-      .then(response => {
-        if (response?.data) {
-          if (!isEmpty(response.data.artifacts)) {
-            return new Promise((resolve, reject) => {
-              openPopUp(ConfirmDialog, {
-                confirmButton: {
-                  label: 'Overwrite',
-                  variant: PRIMARY_BUTTON,
-                  handler: (...args) => {
-                    handleRegisterArtifact(...args)
-                      .then(resolve)
-                      .catch(reject)
-                  }
-                },
-                cancelButton: {
-                  label: 'Cancel',
-                  variant: TERTIARY_BUTTON,
-                  handler: () => reject()
-                },
-                closePopUp: () => reject(),
-                header: messagesByKind.overwriteConfirmTitle,
-                message: messagesByKind.getOverwriteConfirmMessage(
-                  response.data.artifacts[0].kind || ARTIFACT_TYPE
-                )
-              })
-            })
-          } else {
-            return handleRegisterArtifact()
-          }
-        }
-      })
-      .catch(error => {
-        if (error) {
-          const customErrorMsg =
-            error.response.status === FORBIDDEN_ERROR_STATUS_CODE
-              ? 'You do not have permission to create a new resource'
-              : `${title} failed to initiate`
-
-          showErrorNotification(dispatch, error, '', customErrorMsg, () => registerArtifact(values))
-          resolveModal()
-        }
-      })
+    return processActionAfterTagUniquesValidation({
+      tag: values.metadata.tag ?? 'latest',
+      artifact: data,
+      projectName: params.projectName,
+      dispatch,
+      actionCallback: handleRegisterArtifact,
+      getCustomErrorMsg: error => {
+        return error?.response?.status === FORBIDDEN_ERROR_STATUS_CODE
+          ? 'You do not have permission to create a new resource'
+          : `${title} failed to initiate`
+      },
+      onErrorCallback: resolveModal,
+      showLoader: () => setIsLoading(true),
+      hideLoader: () => setIsLoading(false)
+    })
   }
 
   const getModalActions = formState => {
@@ -193,25 +163,28 @@ const RegisterArtifactModal = ({
     <Form form={formRef.current} onSubmit={registerArtifact}>
       {formState => {
         return (
-          <Modal
-            data-testid="register-artifact"
-            actions={getModalActions(formState)}
-            className="artifact-register-form"
-            location={location}
-            onClose={handleCloseModal}
-            show={isOpen}
-            size={MODAL_SM}
-            title={title}
-          >
-            <RegisterArtifactModalForm
-              formState={formState}
-              initialValues={initialValues}
-              messagesByKind={messagesByKind}
-              params={params}
-              setFieldState={formState.form.mutators.setFieldState}
-              showType={artifactKind === ARTIFACT_TYPE}
-            />
-          </Modal>
+          <>
+            {isLoading && <Loader />}
+            <Modal
+              data-testid="register-artifact"
+              actions={getModalActions(formState)}
+              className="artifact-register-form"
+              location={location}
+              onClose={handleCloseModal}
+              show={isOpen}
+              size={MODAL_SM}
+              title={title}
+            >
+              <RegisterArtifactModalForm
+                formState={formState}
+                initialValues={initialValues}
+                messagesByKind={messagesByKind}
+                params={params}
+                setFieldState={formState.form.mutators.setFieldState}
+                showType={artifactKind === ARTIFACT_TYPE}
+              />
+            </Modal>
+          </>
         )
       }}
     </Form>

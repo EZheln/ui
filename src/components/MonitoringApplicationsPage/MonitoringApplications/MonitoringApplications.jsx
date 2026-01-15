@@ -21,16 +21,23 @@ import React, { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Table from '../../Table/Table'
+import ApplicationTableRow from '../../../elements/ApplicationTableRow/ApplicationTableRow'
+import MEPsWithDetections from './MEPsWithDetections'
 import NoData from '../../../common/NoData/NoData'
 import SectionTable from '../../../elements/SectionTable/SectionTable'
-import { Tip } from 'igz-controls/components'
-import ApplicationTableRow from '../../../elements/ApplicationTableRow/ApplicationTableRow'
+import Table from '../../Table/Table'
+import { Loader, Tip } from 'igz-controls/components'
 
+import { MODEL_ENDPOINTS_TAB, MONITORING_APP_PAGE } from '../../../constants'
 import { MONITORING_APPLICATIONS_NO_DATA_MESSAGE } from '../MonitoringApplicationsPage.util'
-import { generateOperatingFunctionsTable } from './monitoringApplications.util'
 import { createApplicationContent } from '../../../utils/createApplicationContent'
-import { removeMonitoringApplications } from '../../../reducers/monitoringApplicationsReducer'
+import { generateOperatingFunctionsTable } from './monitoringApplications.util'
+import {
+  removeMonitoringApplications,
+  removeMEPWithDetections
+} from '../../../reducers/monitoringApplicationsReducer'
+import { saveAndTransformSearchParams } from 'igz-controls/utils/filter.util'
+
 import PresentMetricsIcon from 'igz-controls/images/present-metrics-icon.svg?react'
 
 const MonitoringApplications = () => {
@@ -38,7 +45,9 @@ const MonitoringApplications = () => {
   const params = useParams()
   const navigate = useNavigate()
   const {
-    monitoringApplications: { applications = [], operatingFunctions = [] }
+    monitoringApplications: { applications = [], operatingFunctions = [] },
+    loading,
+    error
   } = useSelector(store => store.monitoringApplicationsStore)
 
   const applicationsTableActionsMenu = useMemo(
@@ -49,19 +58,27 @@ const MonitoringApplications = () => {
           id: 'open-metrics',
           label: 'Open metrics',
           icon: <PresentMetricsIcon />,
-          onClick: data => navigate(data.name)
+          onClick: data =>
+            navigate(
+              `/projects/${params.projectName}/${MONITORING_APP_PAGE}/${data.name}/${MODEL_ENDPOINTS_TAB}${saveAndTransformSearchParams(
+                window.location.search,
+                true
+              )}`
+            )
         }
       ]
     ],
-    [navigate]
+    [navigate, params.projectName]
   )
   const operatingFunctionsTable = useMemo(
-    () => generateOperatingFunctionsTable(operatingFunctions),
-    [operatingFunctions]
+    () => generateOperatingFunctionsTable(operatingFunctions, params.projectName),
+    [operatingFunctions, params.projectName]
   )
   const applicationsTableContent = useMemo(() => {
-    return applications.map(contentItem => createApplicationContent(contentItem))
-  }, [applications])
+    return applications.map(contentItem =>
+      createApplicationContent(contentItem, params.projectName)
+    )
+  }, [applications, params.projectName])
 
   const applicationsTableHeaders = useMemo(
     () => applicationsTableContent[0]?.content ?? [],
@@ -71,38 +88,47 @@ const MonitoringApplications = () => {
   useEffect(() => {
     return () => {
       dispatch(removeMonitoringApplications())
+      dispatch(removeMEPWithDetections())
     }
   }, [dispatch, params.projectName])
 
   return (
     <div className="monitoring-apps">
       <div className="monitoring-app__section section_small">
+        <MEPsWithDetections />
         <div className="monitoring-app__section-item">
           <div className="section-item_title">
-            <span>Controller calls</span>
-            <Tip text="The number of controller's calls to the monitoring apps" />
-          </div>
-          <NoData message={MONITORING_APPLICATIONS_NO_DATA_MESSAGE} />
-        </div>
-        <div className="monitoring-app__section-item">
-          <div className="section-item_title">
-            <span>Operating functions</span>
+            <span>System functions</span>
             <Tip text="System functions that are used for the monitoring application operation" />
           </div>
-          {operatingFunctions.length === 0 ? (
-            <NoData message={MONITORING_APPLICATIONS_NO_DATA_MESSAGE} />
+          {operatingFunctions.length === 0 && !loading ? (
+            <NoData
+              message={
+                error
+                  ? 'Failed to fetch monitoring applications'
+                  : MONITORING_APPLICATIONS_NO_DATA_MESSAGE
+              }
+            />
           ) : (
-            <SectionTable params={params} table={operatingFunctionsTable} />
+            <SectionTable loading={loading} params={params} table={operatingFunctionsTable} />
           )}
         </div>
       </div>
       <div className="monitoring-app__section section_big">
         <div className="monitoring-app__section-item">
           <div className="section-item_title">
-            <span>All Applications</span>
+            <span>All applications</span>
           </div>
-          {applications.length === 0 ? (
-            <NoData message={MONITORING_APPLICATIONS_NO_DATA_MESSAGE} />
+          {applications.length === 0 && !loading ? (
+            <NoData
+              message={
+                error
+                  ? 'Failed to fetch monitoring applications'
+                  : MONITORING_APPLICATIONS_NO_DATA_MESSAGE
+              }
+            />
+          ) : loading ? (
+            <Loader section secondary />
           ) : (
             <Table
               actionsMenu={applicationsTableActionsMenu}

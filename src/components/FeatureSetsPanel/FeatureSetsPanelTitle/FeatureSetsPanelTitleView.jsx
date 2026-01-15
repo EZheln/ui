@@ -30,7 +30,7 @@ import {
   getValidationRules,
   getInternalLabelsValidationRule
 } from 'igz-controls/utils/validation.util'
-import { getChipOptions } from '../../../utils/getChipOptions'
+import { getChipOptions } from 'igz-controls/utils/chips.util'
 
 import CloseIcon from 'igz-controls/images/close.svg?react'
 
@@ -64,7 +64,7 @@ const FeatureSetsPanelTitleView = ({
             floatingLabel
             invalid={!validation.isNameValid}
             invalidText="This field is invalid"
-            label="Feature Set Name"
+            label="Feature set name"
             onChange={name => setData(state => ({ ...state, name }))}
             onBlur={handleNameOnBlur}
             required
@@ -145,7 +145,7 @@ const FeatureSetsPanelTitleView = ({
           <span>Passthrough</span>
           <Tip
             className="checkbox__label-tip"
-            text="Select Passthrough to read data directly from the source without ingesting the data to the offline target. Transformations (computation graph, aggregations, etc.) are invalid when this feature is enabled."
+            text="Select passthrough to read data directly from the source without ingesting the data to the offline target. Transformations (computation graph, aggregations, etc.) are invalid when this feature is enabled."
           />
         </CheckBox>
       </div>

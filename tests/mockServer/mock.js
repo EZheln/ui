@@ -45,6 +45,7 @@ import {
   set
 } from 'lodash'
 import mime from 'mime-types'
+import moment from 'moment'
 
 import alerts from './data/alerts.json'
 import frontendSpec from './data/frontendSpec.json'
@@ -213,6 +214,7 @@ const artifactsCategories = {
   dataset: ['dataset'],
   document: ['document'],
   model: ['model'],
+  'llm-prompt': ['llm-prompt'],
   other: ['', 'table', 'link', 'plot', 'chart', 'plotly', 'artifact']
 }
 
@@ -389,7 +391,14 @@ function filterByLabels(elementLabels, requestLabels) {
 
 function getPartitionedData(listOfItems, pathToPartition, pathToUpdated, defaultPathToPartition) {
   return chain(listOfItems)
-    .groupBy(arrayItem => get(arrayItem, pathToPartition, defaultPathToPartition))
+    .groupBy(item => {
+      if (Array.isArray(pathToPartition)) {
+        return pathToPartition
+          .map(path => get(item, path, get(item, defaultPathToPartition)))
+          .join('||')
+      }
+      return get(item, pathToPartition, defaultPathToPartition)
+    })
     .map(group => maxBy(group, groupItem => new Date(get(groupItem, pathToUpdated))))
     .value()
 }
@@ -431,9 +440,13 @@ function getFeatureSet(req, res) {
   }
 
   if (req.query['name']) {
-    collectedFeatureSets = collectedFeatureSets.filter(featureSet =>
-      featureSet.metadata.name.includes(req.query['name'].slice(1))
-    )
+    collectedFeatureSets = collectedFeatureSets.filter(featureSet => {
+      if (req.query['name'].startsWith?.('~')) {
+        return featureSet.metadata.name.includes(req.query['name'].slice(1))
+      }
+
+      return featureSet.metadata.name === req.query['name']
+    })
   }
 
   if (req.query['label']) {
@@ -467,6 +480,27 @@ function createProjectsFeatureSet(req, res) {
   featureSet.metadata['updated'] = currentDate.toISOString()
   featureSet.status['state'] = null
   featureSets.feature_sets.push(featureSet)
+
+  res.send(featureSet)
+}
+
+function updateProjectsFeatureSet(req, res) {
+  let featureSet = req.body
+
+  const featureSetIndex = featureSets.feature_sets.findIndex(
+    featureSetItem =>
+      req.params.project === featureSetItem.metadata.project &&
+      req.params.name === featureSetItem.metadata.name &&
+      req.params.tag === featureSetItem.metadata.tag &&
+      featureSet.metadata.uid === featureSetItem.metadata.uid
+  )
+
+  if (featureSetIndex === -1) {
+    return createProjectsFeatureSet(req, res)
+  }
+
+  featureSet.metadata.updated = new Date().toISOString()
+  featureSets.feature_sets[featureSetIndex] = featureSet
 
   res.send(featureSet)
 }
@@ -802,7 +836,10 @@ function getMonitoringApplications(req, res) {
   const collectedMonitoringApplications = (monitoringApplications[req.params['project']] || []).map(
     application => ({
       ...application,
-      stats: omit(application.stats, ['shards', 'processed_model_endpoints', 'metrics'])
+      stats: {
+        ...omit(application.stats, ['shards', 'processed_model_endpoints', 'metrics']),
+        stream_stats: application.stats.stream_stats['0']
+      }
     })
   )
 
@@ -832,11 +869,11 @@ function getMonitoringApplicationsSummary(req, res) {
 function getMonitoringApplicationData(req, res) {
   const monitoringApplication = (monitoringApplications[req.params['project']] || []).find(
     application => {
-      return application.name === req.params['func']
+      return application.name.toLowerCase() === req.params['func'].toLowerCase()
     }
   )
 
-  if (monitoringApplication.length === 0) {
+  if (!monitoringApplication) {
     res.statusCode = 404
     res.send({
       detail: "MLRunNotFoundError('Monitoring application not found')"
@@ -844,6 +881,27 @@ function getMonitoringApplicationData(req, res) {
   } else {
     res.send(monitoringApplication)
   }
+}
+
+function getMonitoringApplicationDrift(req, res) {
+  const data = []
+  const endDate = moment(Number(req.query.end) || new Date())
+
+  for (
+    const startDate = moment(Number(req.query.start));
+    startDate < endDate;
+    startDate.add(1, 'minute')
+  ) {
+    data.push([
+      startDate.utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'),
+      Math.floor(Math.random() * 11),
+      Math.floor(Math.random() * 11)
+    ])
+  }
+
+  res.send({
+    values: data
+  })
 }
 
 function getRuns(req, res) {
@@ -908,7 +966,13 @@ function getRuns(req, res) {
   }
 
   if (req.query['partition-by'] && req.query['partition-sort-by']) {
-    collectedRuns = getPartitionedData(collectedRuns, 'metadata.name', 'status.last_update')
+    const pathToPartition = ['metadata.name']
+
+    if (req.query['partition-by'] === 'project_and_name') {
+      pathToPartition.push('metadata.project')
+    }
+
+    collectedRuns = getPartitionedData(collectedRuns, pathToPartition, 'status.last_update')
   }
 
   if (req.query['name']) {
@@ -1248,6 +1312,18 @@ function invokeSchedule(req, res) {
   res.send(respTemplate)
 }
 
+function updateSchedule(req, res) {
+  const existingScheduledJobIndex = schedules.schedules.find(
+    schedule =>
+      schedule.name === req.params.schedule &&
+      schedule.project === req.body.scheduled_object.task.metadata.project
+  )
+
+  existingScheduledJobIndex.scheduled_object = req.body.scheduled_object
+
+  return res.send()
+}
+
 function getProjectsFeaturesEntities(req, res) {
   const artifact = req.path.substring(req.path.lastIndexOf('/') + 1)
   let collectedArtifacts = []
@@ -1413,6 +1489,7 @@ function getArtifacts(req, res) {
     collectedArtifacts = collectedArtifacts.filter(artifact => {
       if (req.query['name'].includes('~')) {
         const value = artifact.spec?.db_key ?? artifact.db_key
+
         if (req.query['name'].includes('~')) {
           return value.includes(req.query['name'].slice(1))
         } else {
@@ -1436,16 +1513,50 @@ function getArtifacts(req, res) {
         break
       default:
         collectedArtifacts = collectedArtifacts.filter(
-          artifact =>
-            artifact.metadata?.tag === req.query['tag'] || artifact.tag === req.query['tag']
+          artifact => artifact.metadata?.tag === req.query['tag']
         )
         break
     }
   }
 
+  if (req.query['tree']) {
+    collectedArtifacts = collectedArtifacts.filter(
+      artifact => artifact.metadata?.tree === req.query['tree']
+    )
+  }
+
+  if (req.query['parent']) {
+    if (req.query['parent'].includes(':')) {
+      const [key, tag] = req.query['parent'].split(':')
+
+      collectedArtifacts = collectedArtifacts.filter(artifact => {
+        const match = artifact.spec.parent_uri.match(
+          /^store:\/\/(?<kind>.+?)\/(?<project>.+?)\/(?<key>.+?)(#(?<iteration>.+?))?(:(?<tag>.+?))?(@(?<tree>[^^]+))?(\^(?<uid>.+))?$/
+        )
+
+        return match && match.groups.key.includes(key) && match.groups.tag.includes(tag)
+      })
+    } else {
+      collectedArtifacts = collectedArtifacts.filter(artifact =>
+        artifact.spec?.parent_uri
+          ?.match(/^store:\/\/[^/]+\/[^/]+\/([^#/]+)/)?.[1]
+          ?.includes(req.query['parent'])
+      )
+    }
+  }
+
   if (req.query['format'] === 'minimal') {
     collectedArtifacts = collectedArtifacts.map(func => {
-      const fieldsToPick = ['db_key', 'producer', 'size', 'target_path', 'framework', 'metrics']
+      const fieldsToPick = [
+        'db_key',
+        'producer',
+        'size',
+        'target_path',
+        'framework',
+        'metrics',
+        'has_children',
+        'parent_uri'
+      ]
       const specFieldsToPick = fieldsToPick.map(fieldName => `spec.${fieldName}`)
 
       return pick(func, [
@@ -1460,9 +1571,15 @@ function getArtifacts(req, res) {
   }
 
   if (req.query['partition-by']) {
+    const pathToPartition = ['spec.db_key']
+
+    if (req.query['partition-by'] === 'project_and_name') {
+      pathToPartition.push('metadata.project')
+    }
+
     collectedArtifacts = getPartitionedData(
       collectedArtifacts,
-      'spec.db_key',
+      pathToPartition,
       'metadata.updated',
       'db_key'
     )
@@ -1697,6 +1814,87 @@ function getPipeline(req, res) {
   res.send(collectedPipeline)
 }
 
+function pipelineRetry(req, res) {
+  const originalPipelineID = pipelineIDs.find(
+    item => item.run.id === req.params.pipelineID && item.run.project === req.params.project
+  )
+  const originalPipeline = (pipelines[req.params.project]?.runs ?? []).find(pipeline => {
+    return (pipeline.id = req.params.pipelineID)
+  })
+  if (originalPipeline) {
+    const runID = makeUID(32)
+    const newPipelineID = {
+      ...originalPipelineID,
+      run: {
+        ...originalPipelineID.run,
+        id: runID,
+        name: `Retry of ${originalPipelineID.run.name}`,
+        status: 'Running'
+      }
+    }
+    const newPipeline = {
+      ...originalPipeline,
+      id: runID,
+      name: `Retry of ${originalPipeline.name}`,
+      status: 'Running'
+    }
+
+    pipelines[req.params.project]?.runs.push(newPipeline)
+    pipelineIDs.push(newPipelineID)
+
+    setTimeout(() => {
+      newPipelineID.run.status = 'Failed'
+      newPipeline.status = 'Failed'
+    }, 5000)
+
+    res.send(runID)
+  } else {
+    res.statusCode = 404
+    res.send({
+      detail: {
+        reason: `MLRunNotFoundError('Workflow not found ${req.params.project}/${req.params.pipelineID}')`
+      }
+    })
+  }
+}
+
+function pipelineTerminate(req, res) {
+  const { project, pipelineID } = req.params
+
+  const pipeline = (pipelines[project]?.runs ?? []).find(p => p.id === pipelineID)
+  const pipelineMeta = pipelineIDs.find(
+    item => item.run.id === pipelineID && item.run.project === project
+  )
+
+  if (!pipeline || !pipelineMeta) {
+    return res.status(404).send({
+      detail: {
+        reason: `MLRunNotFoundError('Workflow not found ${project}/${pipelineID}')`
+      }
+    })
+  }
+
+  pipeline.status = 'terminating'
+  pipelineMeta.run.status = 'terminating'
+
+  const taskFunc = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        pipeline.status = 'failed'
+        pipelineMeta.run.status = 'failed'
+        resolve()
+      }, 6000)
+    })
+  }
+
+  const task = createTask(project, {
+    taskFunc,
+    kind: `pipeline.termination.wrapper.${pipelineID}`
+  })
+
+  res.status(202).send(task)
+}
+
 function getFuncs(req, res) {
   const dt = parseInt(Date.now())
   const collectedFuncsByPrjTime = funcs.funcs
@@ -1785,7 +1983,9 @@ function getFunc(req, res) {
   let collectedFuncs = funcs.funcs
     .filter(func => func.metadata.project === req.params['project'])
     .filter(func => func.metadata.name === req.params['func'])
-    .filter(func => func.metadata.hash === req.query.hash_key)
+    .filter(
+      func => func.metadata.hash === req.query.hash_key || func.metadata.uid === req.query.hash_key
+    )
 
   if (req.query.tag) {
     collectedFuncs = collectedFuncs.filter(func => func.metadata.tag === req.query.tag)
@@ -2170,9 +2370,35 @@ function putTags(req, res) {
   })
 
   if (collectedArtifacts?.length > 0) {
-    let editedTag = cloneDeep(collectedArtifacts[0])
-    editedTag.metadata ? (editedTag.metadata.tag = tagName) : (editedTag.tag = tagName)
-    artifacts.artifacts.push(editedTag)
+    let artifactWithEditedTag = cloneDeep(collectedArtifacts[0])
+    artifactWithEditedTag.metadata
+      ? (artifactWithEditedTag.metadata.tag = tagName)
+      : (artifactWithEditedTag.tag = tagName)
+
+    const collectedArtifactsWithSameName = artifacts.artifacts.filter(artifact => {
+      return (
+        artifact.metadata?.project === req.params.project &&
+        ((artifact.spec && artifact.spec.db_key === req.body.identifiers[0].key) ||
+          artifact.metadata.key === req.body.identifiers[0].key)
+      )
+    })
+
+    // handle existing artifacts with same name and tag
+    collectedArtifactsWithSameName.forEach(artifact => {
+      if (artifact.metadata?.tag === tagName) {
+        if (
+          collectedArtifactsWithSameName.filter(
+            searchedArtifact => searchedArtifact.metadata.uid === artifact.metadata.uid
+          ).length > 1
+        ) {
+          remove(artifacts.artifacts, artifact)
+        } else {
+          artifact.metadata.tag = null
+        }
+      }
+    })
+
+    artifacts.artifacts.push(artifactWithEditedTag)
   }
 
   res.send({
@@ -2211,24 +2437,36 @@ function deleteTags(req, res) {
 
 function getArtifact(req, res) {
   let resData
-  let requestedArtifact = artifacts.artifacts.find(
-    artifact =>
+  let artifactMatchedByUID = null
+  let requestedArtifact = artifacts.artifacts.find(artifact => {
+    if (
+      !isNil(req.query.uid) &&
+      (artifact.metadata?.project === req.params.project ||
+        artifact.project === req.params.project) &&
+      (artifact.spec?.db_key === req.params.key || artifact?.db_key === req.params.key) &&
+      artifact.metadata?.uid === req.query.uid
+    ) {
+      artifactMatchedByUID = artifact
+    }
+
+    return (
       (artifact.metadata?.project === req.params.project ||
         artifact.project === req.params.project) &&
       (artifact.spec?.db_key === req.params.key || artifact?.db_key === req.params.key) &&
       (isNil(req.query.iter) ||
         +req.query.iter === artifact?.iter ||
         +req.query.iter === artifact.metadata?.iter) &&
-      (isNil(req.query.tag) ||
-        artifact.metadata?.tag === req.query.tag ||
-        artifact?.tag === req.query.tag) &&
+      (isNil(req.query.tag) || artifact.metadata?.tag === req.query.tag) &&
       (isNil(req.query.tree) ||
         artifact.metadata?.tree === req.query.tree ||
         artifact?.tree === req.query.tree) &&
       (isNil(req.query.uid) ||
-        artifact.metadata?.uid === req.query.uid ||
-        artifact?.uid === req.query.uid)
-  )
+        artifact.metadata?.uid === req.query['object-uid'] ||
+        artifact?.uid === req.query['object-uid'])
+    )
+  })
+
+  requestedArtifact = requestedArtifact ?? artifactMatchedByUID
 
   if (requestedArtifact) {
     resData = requestedArtifact
@@ -2418,9 +2656,15 @@ function getModelEndpoints(req, res) {
     )
   }
 
-  if (req.query['endpoint_id']) {
+  if (req.query['mode']) {
+    collectedEndpoints = collectedEndpoints.filter(
+      endpoint => Number(endpoint.metadata.mode) === Number(req.query['mode'])
+    )
+  }
+
+  if (req.query['endpoint-id']) {
     const modelEndpoint = collectedEndpoints.find(
-      endpoint => endpoint.metadata.uid === req.query.endpoint_id
+      endpoint => endpoint.metadata.uid === req.query['endpoint-id']
     )
 
     return res.send(modelEndpoint)
@@ -2755,7 +2999,7 @@ app.get(`${mlrunAPIIngress}/projects/:project/feature-sets`, getFeatureSet)
 app.post(`${mlrunAPIIngress}/projects/:project/feature-sets`, createProjectsFeatureSet)
 app.put(
   `${mlrunAPIIngress}/projects/:project/feature-sets/:name/references/:tag`,
-  createProjectsFeatureSet
+  updateProjectsFeatureSet
 )
 app.delete(`${mlrunAPIIngress}/projects/:project/feature-sets/:featureSet`, deleteFeatureSet)
 
@@ -2776,10 +3020,14 @@ app.get(
   `${mlrunAPIIngress}/projects/:project/model-monitoring/function-summaries`,
   getMonitoringApplications
 )
-app.get(`${mlrunAPIIngress}/project-summary/:project`, getMonitoringApplicationsSummary)
+app.get(`${mlrunAPIIngress}/project-summaries/:project`, getMonitoringApplicationsSummary)
 app.get(
-  `${mlrunAPIIngress}/projects/:project/model-monitoring/function-summary/:func`,
+  `${mlrunAPIIngress}/projects/:project/model-monitoring/function-summaries/:func`,
   getMonitoringApplicationData
+)
+app.get(
+  `${mlrunAPIIngress}/projects/:project/model-monitoring/drift-over-time`,
+  getMonitoringApplicationDrift
 )
 
 app.get(`${mlrunAPIIngress}/projects/:project/runs`, getRuns)
@@ -2803,10 +3051,13 @@ app.get(`${mlrunAPIIngress}/projects/*/schedules`, getProjectsSchedules)
 app.get(`${mlrunAPIIngress}/projects/:project/schedules/:schedule`, getProjectsSchedule)
 app.delete(`${mlrunAPIIngress}/projects/:project/schedules/:schedule`, deleteSchedule)
 app.post(`${mlrunAPIIngress}/projects/:project/schedules/:schedule/invoke`, invokeSchedule)
+app.put(`${mlrunAPIIngress}/projects/:project/schedules/:schedule/`, updateSchedule)
 
 app.get(`${mlrunAPIIngress}/projects/:project/pipelines`, getPipelines)
 app.get(`${mlrunAPIIngress}/projects/*/pipelines`, getPipelines)
 app.get(`${mlrunAPIIngress}/projects/:project/pipelines/:pipelineID`, getPipeline)
+app.post(`${mlrunAPIIngress}/projects/:project/pipelines/:pipelineID/retry`, pipelineRetry)
+app.post(`${mlrunAPIIngress}/projects/:project/pipelines/:pipelineID/terminate`, pipelineTerminate)
 
 app.get(`${mlrunAPIIngress}/projects/:project/artifact-tags`, getProjectsArtifactTags)
 app.get(`${mlrunAPIIngressV2}/projects/:project/artifacts`, getArtifacts)

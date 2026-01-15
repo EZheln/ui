@@ -22,12 +22,12 @@ import PropTypes from 'prop-types'
 import { useDispatch, useSelector } from 'react-redux'
 import { isEmpty } from 'lodash'
 
-import ApplicationMetricCard from './MetricsCards/ApplicationMetricCard'
+import ApplicationMetricCard from './MetricsCards/ApplicationMetricCard/ApplicationMetricCard'
 import DatePicker from '../../common/DatePicker/DatePicker'
-import InvocationsMetricCard from './MetricsCards/InvocationsMetricCard'
+import InvocationsMetricCard from './MetricsCards/InvocationsMetricCard/InvocationsMetricCard'
 import MetricsSelector from '../../elements/MetricsSelector/MetricsSelector'
 import NoData from '../../common/NoData/NoData'
-import NoMetricData from './MetricsCards/NoMetricData'
+import NoMetricData from './MetricsCards/NoMetricData/NoMetricData'
 import StatsCard from '../../common/StatsCard/StatsCard'
 
 import {
@@ -42,6 +42,7 @@ import {
   TIME_FRAME_LIMITS
 } from '../../utils/datePicker.util'
 import {
+  clearMetricsOptions,
   fetchModelEndpointMetrics,
   fetchModelEndpointMetricsValues,
   setDetailsDates,
@@ -54,7 +55,12 @@ import MetricsIcon from 'igz-controls/images/metrics-icon.svg?react'
 
 import './DetailsMetrics.scss'
 
-const DetailsMetrics = ({ selectedItem }) => {
+const DetailsMetrics = ({
+  applicationNameProp = '',
+  selectedItem,
+  renderTitle = null,
+  isDetailsPopUp = false
+}) => {
   const [metrics, setMetrics] = useState([])
   const [selectedDate, setSelectedDate] = useState('')
   const [previousTotalInvocation, setPreviousTotalInvocation] = useState(0)
@@ -118,12 +124,13 @@ const DetailsMetrics = ({ selectedItem }) => {
     dispatch(
       fetchModelEndpointMetrics({
         project: selectedItem.metadata.project,
-        uid: selectedItem.metadata.uid
+        uid: selectedItem.metadata.uid,
+        applicationName: applicationNameProp
       })
     )
       .unwrap()
       .then(() => setMetricOptionsAreLoaded(true))
-  }, [dispatch, selectedItem.metadata.project, selectedItem.metadata.uid])
+  }, [applicationNameProp, dispatch, selectedItem.metadata.project, selectedItem.metadata.uid])
 
   useEffect(() => {
     const selectedDate = detailsStore.dates.selectedOptionId
@@ -232,34 +239,46 @@ const DetailsMetrics = ({ selectedItem }) => {
     metricsValuesAbortController
   ])
 
+  useEffect(() => {
+    if (isDetailsPopUp) {
+      return () => {
+        dispatch(clearMetricsOptions())
+      }
+    }
+  }, [dispatch, isDetailsPopUp])
+
   return (
     <div className="metrics-wrapper">
-      <div className="metrics-wrapper__custom-filters">
-        <MetricsSelector
-          name="metrics"
-          disabled={!hasMetricsList}
-          metrics={detailsStore.metricsOptions.all}
-          onSelect={metrics =>
-            dispatch(
-              setSelectedMetricsOptions({
-                endpointUid: selectedItem.metadata.uid,
-                metrics
-              })
-            )
-          }
-          preselectedMetrics={detailsStore.metricsOptions.preselected}
-        />
-        <DatePicker
-          className="details-date-picker"
-          date={detailsStore.dates.value[0]}
-          dateTo={detailsStore.dates.value[1]}
-          selectedOptionId={detailsStore.dates.selectedOptionId}
-          label=""
-          onChange={handleChangeDates}
-          type="date-range-time"
-          timeFrameLimit={TIME_FRAME_LIMITS.MONTH}
-          withLabels
-        />
+      <div className="metrics-wrapper__header">
+        {renderTitle && <h3 className="metrics-wrapper__header__title">{renderTitle()}</h3>}
+        <div className="metrics-wrapper__header__custom-filters">
+          <MetricsSelector
+            applicationName={applicationNameProp}
+            name="metrics"
+            disabled={!hasMetricsList}
+            metrics={detailsStore.metricsOptions.all}
+            onSelect={metrics =>
+              dispatch(
+                setSelectedMetricsOptions({
+                  endpointUid: selectedItem.metadata.uid,
+                  metrics
+                })
+              )
+            }
+            preselectedMetrics={detailsStore.metricsOptions.preselected}
+          />
+          <DatePicker
+            className="details-date-picker"
+            date={detailsStore.dates.value[0]}
+            dateTo={detailsStore.dates.value[1]}
+            selectedOptionId={detailsStore.dates.selectedOptionId}
+            label=""
+            onChange={handleChangeDates}
+            type="date-range-time"
+            timeFrameLimit={TIME_FRAME_LIMITS.MONTH}
+            withLabels
+          />
+        </div>
       </div>
       {generatedMetrics.length === 0 ? (
         !detailsStore.loadingCounter ? (
@@ -278,7 +297,7 @@ const DetailsMetrics = ({ selectedItem }) => {
             return (
               <React.Fragment key={applicationName}>
                 <div className="metrics__app-name">
-                  {applicationName === ML_RUN_INFRA ? '' : applicationName}
+                  {applicationName === ML_RUN_INFRA || applicationNameProp ? '' : applicationName}
                 </div>
                 {applicationMetrics.map(metric => {
                   if (applicationName === ML_RUN_INFRA) {
@@ -326,7 +345,10 @@ const DetailsMetrics = ({ selectedItem }) => {
 }
 
 DetailsMetrics.propTypes = {
-  selectedItem: PropTypes.object,
+  applicationNameProp: PropTypes.string,
+  selectedItem: PropTypes.object.isRequired,
+  renderTitle: PropTypes.func,
+  isDetailsPopUp: PropTypes.bool
 }
 
 export default React.memo(DetailsMetrics)

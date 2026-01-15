@@ -37,8 +37,7 @@ import {
   generateCheckboxGroup
 } from '../../common-tools/common-tools'
 import inputWithAutocomplete from '../components/input-with-autocomplete.component'
-
-const { By } = require('selenium-webdriver')
+import { By } from 'selenium-webdriver'
 
 const memberOverviewLabelsTable = {
   root: '.settings__members',
@@ -116,35 +115,26 @@ const deployModelTable = {
   }
 }
 
-const artifactsPreviewRow = {
-  root: '.pop-up-dialog .preview-body',
+const artifactsPreviewTable = {
+  root: '.pop-up-dialog .item-artifacts__modal-preview',
   header: {
-    root: '',
-    sorters: {}
+    root: '.preview-item:nth-of-type(1)',
+    sorters: {
+      name: '.item-data__header:nth-of-type(1)',
+      path: '.item-data__path',
+      size: '.item-data__header:nth-of-type(3)',
+      updated: '.item-data__header:nth-of-type(4)'
+    }
   },
   body: {
     row: {
-      root: '.preview-item',
+      root: '.preview-item:nth-of-type(2)',
       fields: {
         name: '.item-data__name',
         path: '.item-data__path',
         size: '.item-data:nth-of-type(3)',
         data: '.item-data:nth-of-type(4)',
         download_btn: '.preview-body__download'
-      }
-    }
-  }
-}
-
-const artifactsPreviewHeader = {
-  root: '.pop-up-dialog',
-  header: {},
-  body: {
-    root: '.preview-body',
-    row: {
-      root: '.preview-item:nth-of-type(1)',
-      fields: {
-        key: '.item-data'
       }
     }
   }
@@ -303,7 +293,7 @@ const actionMenuStructure = {
 }
 
 const volumePathsTable = {
-  root: '.modal__content .form-row:nth-of-type(7)',
+  root: '[data-testid="resources.volumesTable"]',
   header: {
     root: '.form-table__header-row',
     sorters: {
@@ -316,15 +306,16 @@ const volumePathsTable = {
     offset: 1,
     add_row_btn: '.form-table__action-row button',
     row: {
-      root: 'div[class=table__row]',
+      root: 'div.form-table__row.form-table__volume-row',
       fields: {
-        type: '.table__cell:nth-of-type(1) .data-ellipsis',
-        volume_name: '.table__cell:nth-of-type(2) .data-ellipsis',
-        path: '.table__cell:nth-of-type(3) .data-ellipsis',
+        type: '.form-table__cell:nth-of-type(1) .data-ellipsis',
+        volume_name: '.form-table__cell:nth-of-type(2) .data-ellipsis',
+        path: '.form-table__cell:nth-of-type(3) .data-ellipsis',
         action_menu: {
           componentType: actionMenu,
           structure: actionMenuStructure
-        }
+        },
+        remove_btn: '[data-testid="delete-btn"]'
       }
     }
   }
@@ -484,10 +475,9 @@ const advancedEnvironmentVariablesTable = {
           )
         },
         type_dropdown_verify: '.form-table__cell_1 .data-ellipsis',
-        value_input: '.form-table__cell_3 .form-field__control input',
+        value_input: '.form-table__cell_3 .form-field__control:nth-of-type(1) input',
         value_verify: '.form-table__cell_3 .data-ellipsis',
-        value_input_key:
-          '.form-table__cell_3 .form-field-input:nth-of-type(2) .form-field__control input'
+        value_input_key: '.form-table__cell_3 .form-field-input:nth-of-type(2) input'
       }
     }
   }
@@ -717,7 +707,7 @@ const infoPaneOverviewSourcesHeaders = {
   }
 }
 
-module.exports = {
+export default {
   createNewProject: {
     Title: commonTitle,
     Name_Input: inputGroup(
@@ -819,8 +809,12 @@ module.exports = {
     Content_Application_Log_Info: By.css('.item-info .table__item-logs:nth-of-type(1)'),
     Title_Function_Log_Info: By.css('.item-info > div > h3:nth-of-type(2)'),
     Content_Function_Log_Info: By.css('.item-info .table__item-logs:nth-of-type(2)'),
-    Logs_Text_container: By.css('.table__item .table__item-logs-content'),
-    Logs_Refresh_Button: By.css('.table__item .logs-refresh')
+    Logs_Text_container: By.css('#overlay_container .table__item .table__item-logs-content'),
+    Logs_Refresh_Button: By.css('#overlay_container .table__item .logs-refresh'),
+    Requested_Features_Table: By.css('.item-info .item-requested-features__table'),
+    Returned_Features_Table: By.css('.item-info .details-metadata__table'),
+    Statistics_Table: By.css('.item-info #DETAILS_STATISTICS_TABLE_ID'),
+    Pop_Out_Button: By.css('[data-testid="details-preview-tooltip-wrapper"]')
   },
   modalWizardForm: {
     Title: By.css('.modal .modal__header-title'),
@@ -1000,7 +994,7 @@ module.exports = {
       ),
       Volumes_Subheader: labelComponent(
         generateLabelGroup(
-          '.modal__content .wizard-form__content-container .form-row:nth-child(6)',
+          '.modal__content .wizard-form__content-container .job-wizard__resources .form-row:nth-child(6)',
           false,
           true
         )
@@ -1202,6 +1196,17 @@ module.exports = {
           false,
           true
         )
+      ),
+      Env_Variables_Table_Secret_Name_Input: inputGroup(
+        generateInputGroup(
+          '[data-testid="advanced.environmentVariablesTable"] .form-table__cell:nth-of-type(3) .secret-name',
+          true,
+          true,
+          '.form-field__warning svg'
+        )
+      ),
+      Delete_New_Row_Button: By.css(
+        '[data-testid="advanced.environmentVariablesTable"] .form-table__actions-cell .round-icon-cp:nth-of-type(2)'
       )
     },
     Hyperparameter_Strategy_Accordion: {
@@ -1465,6 +1470,7 @@ module.exports = {
   previewPopup: {
     Title: By.css('.pop-up-dialog .pop-up-dialog__header'),
     Cross_Cancel_Button: commonCrossCancelButton,
+    Preview_Table: commonTable(artifactsPreviewTable),
     Preview_Modal_Container: By.css('.pop-up-dialog .item-artifacts__modal-preview'),
     Download_Button: By.css('.pop-up-dialog .preview-item:nth-of-type(2) .preview-body__download')
   },
@@ -1489,7 +1495,7 @@ module.exports = {
       }
     }),
     Discard_Button: By.css('.apply-discard-buttons .pop-up-dialog__btn_cancel'),
-    Apply_Button: By.css('.apply-discard-buttons button.btn-secondary')
+    Apply_Button: By.css('.apply-discard-buttons .btn-primary')
   },
   projectMembersPopup: {
     Cross_Cancel_Button: commonCrossCancelButton,
@@ -1552,7 +1558,7 @@ module.exports = {
       }
     }),
     Discard_Button: By.css('.apply-discard-buttons .pop-up-dialog__btn_cancel'),
-    Apply_Button: By.css('.apply-discard-buttons button.btn-secondary'),
+    Apply_Button: By.css('.apply-discard-buttons .btn-primary'),
     Footer_Annotation_Label: By.css('.footer-annotation')
   },
   createNewSecretPopup: {
@@ -1634,14 +1640,6 @@ module.exports = {
     ),
     Schedule_Button: By.css('.feature-set-panel__schedule .btn__schedule')
   },
-  artifactPreviewPopup: {
-    Cross_Cancel_Button: commonCrossCancelButton,
-    Preview_Row: commonTable(artifactsPreviewRow),
-    Preview_Header: commonTable(artifactsPreviewHeader),
-    Download_Button: By.css(
-      '.pop-up-dialog .preview-body .preview-item:nth-of-type(2) .preview-body__download'
-    )
-  },
   removeMemberPopup: {
     Title: By.css('.delete-member__pop-up .pop-up-dialog__header-text'),
     Remove_Member_Button: By.css('.delete-member__pop-up .btn-danger')
@@ -1660,6 +1658,13 @@ module.exports = {
     Project_Name_Filter_Dropdown: dropdownComponent(
       generateDropdownGroup(
         '#overlay_container [data-testid="pop-up-dialog"] [data-testid="project-form-field-select"]',
+        '.form-field__control',
+        '.options-list [data-testid="select-option"]'
+      )
+    ),
+    Mode_Filter_Dropdown: dropdownComponent(
+      generateDropdownGroup(
+        '#overlay_container [data-testid="me-mode-form-field-select"] [data-testid="select-header"]',
         '.form-field__control',
         '.options-list [data-testid="select-option"]'
       )
@@ -1726,6 +1731,14 @@ module.exports = {
         true
       )
     ),
+    Model_Name_Filter_Input: inputGroup(
+      generateInputGroup('[data-testid="model-name-form-field-input"]', true, false, 'svg')
+    ),
+    Model_Version_Tag_Filter_Input: inputGroup(
+      generateInputGroup('[data-testid="model-tag-form-field-input"]', true, false, 'svg')
+    ),
+    Model_Version_Tag_Filter_Field: By.css('[data-testid="model-tag-form-field-input"] > div:nth-child(2)'),
+    Model_Version_Tag_Filter_Tip: By.css('[data-testid="model-tag-form-field-input"] > div:nth-child(2) .form-field__icons svg'),
     Status_Filter_Element: By.css('[data-testid="state-form-field-select"]'),
     Status_Filter_Dropdown: dropdownComponent(
       generateDropdownGroup(
@@ -1734,11 +1747,19 @@ module.exports = {
         '[data-testid="select-body"] label'
       )
     ),
+    Type_Filter_Element: By.css('[data-testid="type-form-field-select"]'),
     Type_Filter_Dropdown: dropdownComponent(
       generateDropdownGroup(
         '[data-testid="type-form-field-select"]',
         '[data-testid="select-header"]',
-        '[data-testid="select-option"] [data-testid="tooltip-wrapper"]'
+        '.options-list .select__item:not(.hidden) .tooltip-wrapper'
+      )
+    ),
+    Type_Filter_Dropdown_Schedule: dropdownComponent(
+      generateDropdownGroup(
+        '[data-testid="type-form-field-select"]',
+        '[data-testid="select-header"]',
+        '.select__item.multiple:not(.hidden) label'
       )
     ),
     Show_Iterations_Checkbox: checkboxComponent({
@@ -1754,6 +1775,62 @@ module.exports = {
       elements: {
         checkbox: '',
         name: '',
+        icon: ''
+      }
+    }),
+    Type_All_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(1)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Job_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(2)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Workflow_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(3)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Spark_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(7)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Horovod_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(8)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Dask_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(9)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Type_Databricks_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(10)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
         icon: ''
       }
     }),
@@ -1791,6 +1868,14 @@ module.exports = {
     }),
     Status_Pending_Checkbox: checkboxComponent({
       root: '[data-testid="select-checkbox"]:nth-of-type(7)',
+      elements: {
+        checkbox: 'input',
+        name: 'label',
+        icon: ''
+      }
+    }),
+    Status_Pending_retry_Checkbox: checkboxComponent({
+      root: '[data-testid="select-checkbox"]:nth-of-type(8)',
       elements: {
         checkbox: 'input',
         name: 'label',

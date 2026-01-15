@@ -34,13 +34,6 @@ export const V3IO_INPUT_PATH_SCHEME = 'v3io:///'
 export const TAG_LATEST = 'latest'
 export const TAG_NA = 'na'
 
-export const DENSITY_DENSE = 'dense'
-export const DENSITY_NORMAL = 'normal'
-export const DENSITY_MEDIUM = 'medium'
-export const DENSITY_CHUNKY = 'chunky'
-
-export const FULL_VIEW_MODE = 'full'
-
 export const LARGE_REQUEST_CANCELED = 'Large request canceled'
 export const REQUEST_CANCELED = 'Request canceled'
 export const DEFAULT_ABORT_MSG = 'canceled'
@@ -53,13 +46,19 @@ export const CANCEL_REQUEST_TIMEOUT = 120000
 
 export const PROJECT_ONLINE_STATUS = 'online'
 
+export const ABORTED_STATE = 'aborted'
+export const ABORTING_STATE = 'aborting'
+export const COMPLETED_STATE = 'completed'
 export const ERROR_STATE = 'error'
 export const FAIL_STATE = 'fail'
 export const FAILED_STATE = 'failed'
 export const PENDING_STATE = 'pending'
+export const PENDING_RETRY_STATE = 'pendingRetry'
+export const RUNNING_STATE = 'running'
+export const SUCCEEDED_STATE = 'succeeded'
+export const TERMINATING_STATE = 'terminating'
+export const UNHEALTHY_STATE = 'unhealthy'
 export const UNKNOWN_STATE = 'unknown'
-
-export const VIEW_SEARCH_PARAMETER = 'view'
 
 /*=========== PAGINATION =============*/
 
@@ -135,6 +134,8 @@ export const MONITORING_APP_PAGE = 'monitoring-app'
 export const DOCUMENTS_PAGE = 'documents'
 
 export const LLM_PROMPTS_PAGE = 'llm-prompts'
+export const PROMPT_TAB = 'prompt'
+export const ARGUMENTS_TAB = 'arguments'
 
 export const PROJECT_MONITOR = 'monitor'
 
@@ -282,16 +283,21 @@ export const FUNCTION_FAILED_TO_DELETE_STATE = 'failedToDelete'
 export const FUNCTION_ERROR_STATE = 'error'
 export const FUNCTION_INITIALIZED_STATE = 'initialized'
 export const FUNCTION_READY_STATE = 'ready'
-export const FUNCTION_PENDINDG_STATE = 'pending'
+export const FUNCTION_PENDING_STATE = 'pending'
 export const FUNCTION_RUNNING_STATE = 'running'
 export const FUNCTION_DEFAULT_HANDLER = 'handler'
 export const FUNCTION_RUN_KINDS = [FUNCTION_TYPE_JOB]
 export const FUNCTION_FILTERS = 'FUNCTION_FILTERS'
 
+/*=========== PIPELINES =============*/
+
+export const MODEL_RUNNER_STEP_KIND = 'model_runner'
+
 /*=========== ARTIFACTS =============*/
 
 export const ARTIFACTS_TAB = 'artifacts'
 export const ARTIFACT_PREVIEW_TABLE_ROW_LIMIT = 100
+export const LLM_PROMPT_TITLE = 'LLM prompt'
 
 /*=========== DETAILS =============*/
 
@@ -305,6 +311,7 @@ export const DETAILS_FEATURES_ANALYSIS_TAB = 'features-analysis'
 export const DETAILS_FEATURES_TAB = 'features'
 export const DETAILS_INPUTS_TAB = 'inputs'
 export const DETAILS_LOGS_TAB = 'logs'
+export const DETAILS_LLM_PROMPTS_TAB = 'llm-prompts'
 export const DETAILS_METADATA_TAB = 'metadata'
 export const DETAILS_METRICS_TAB = 'metrics'
 export const DETAILS_OVERVIEW_TAB = 'overview'
@@ -317,6 +324,8 @@ export const DETAILS_RESULTS_TAB = 'results'
 export const DETAILS_RETURNED_FEATURES_TAB = 'returned-features'
 export const DETAILS_STATISTICS_TAB = 'statistics'
 export const DETAILS_TRANSFORMATIONS_TAB = 'transformations'
+export const DETAILS_PROMPT_TEMPLATE_TAB = 'prompt-template'
+export const DETAILS_INVOCATION_CONFIGURATION_TAB = 'invocation-configuration'
 export const FETCH_MODEL_FEATURE_VECTOR_BEGIN = 'FETCH_MODEL_FEATURE_VECTOR_BEGIN'
 export const FETCH_MODEL_FEATURE_VECTOR_FAILURE = 'FETCH_MODEL_FEATURE_VECTOR_FAILURE'
 export const FETCH_MODEL_FEATURE_VECTOR_SUCCESS = 'FETCH_MODEL_FEATURE_VECTOR_SUCCESS'
@@ -354,10 +363,6 @@ export const KEY_CODES = {
 /*=========== TABLE =============*/
 
 export const TABLE_CONTAINER = 'table-container'
-export const MAIN_TABLE_ID = 'main-table'
-export const MAIN_TABLE_BODY_ID = 'main-table-body'
-
-export const BUTTON_COPY_URI_CELL_TYPE = 'buttonCopyURI'
 
 /*=========== FILTERS =============*/
 
@@ -377,13 +382,18 @@ export const GROUP_BY_FILTER = 'groupBy'
 export const ITERATIONS_FILTER = 'iter'
 export const LABELS_FILTER = 'labels'
 export const NAME_FILTER = 'name'
+export const ME_MODE_FILTER = 'me-mode'
 export const DATES_FILTER = 'dates'
 export const PROJECT_FILTER = 'project'
+export const REAL_TIME_FILTER = 'realTime'
+export const BATCH_FILTER = 'batch'
 export const TYPE_FILTER = 'type'
 export const SHOW_UNTAGGED_FILTER = 'showUntagged'
 export const SORT_BY = 'sortBy'
 export const STATUS_FILTER = 'state'
 export const TAG_FILTER = 'tag'
+export const MODEL_NAME_FILTER = 'model-name'
+export const MODEL_TAG_FILTER = 'model-tag'
 export const AUTO_REFRESH_ID = 'auto-refresh'
 export const INTERNAL_AUTO_REFRESH_ID = 'internal-auto-refresh'
 export const AUTO_REFRESH = 'Auto Refresh'
@@ -423,6 +433,7 @@ export const PANEL_DEFAULT_ACCESS_KEY = '$generate'
 /*=========== ML REACT FLOW =============*/
 
 export const ML_NODE = 'ml-node'
+export const ML_MODEL_RUNNER_NODE = 'ml-model-runner-node'
 
 export const INPUT_NODE = 'input-node'
 export const OUTPUT_NODE = 'output-node'
@@ -501,3 +512,8 @@ export const HTTPS = 'https://'
 /*========= METRICS TYPES =============*/
 export const METRIC_TYPE = 'metric'
 export const RESULT_TYPE = 'result'
+
+/*========= GENERAL TEXT =============*/
+
+export const COUNTERS_GENERAL_MESSAGE =
+  'Counters use a caching mechanism, and are not auto-refreshed.'

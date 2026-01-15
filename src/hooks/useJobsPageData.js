@@ -25,6 +25,7 @@ import { isEmpty } from 'lodash'
 import { monitorJob, pollAbortingJobs, rerunJob } from '../components/Jobs/jobs.util'
 
 import {
+  ABORTING_STATE,
   BE_PAGE,
   BE_PAGE_SIZE,
   FILTER_ALL_ITEMS,
@@ -39,7 +40,7 @@ import { parseJob } from '../utils/parseJob'
 import { fetchAllJobRuns, fetchJobs, fetchScheduledJobs } from '../reducers/jobReducer'
 import { fetchWorkflows } from '../reducers/workflowReducer'
 import { useFiltersFromSearchParams } from './useFiltersFromSearchParams.hook'
-import { getSavedSearchParams } from '../utils/filter.util'
+import { getSavedSearchParams } from 'igz-controls/utils/filter.util'
 import { useRefreshAfterDelete } from './useRefreshAfterDelete.hook'
 
 export const useJobsPageData = (initialTabData, selectedTab) => {
@@ -142,7 +143,7 @@ export const useJobsPageData = (initialTabData, selectedTab) => {
           if (response?.runs) {
             const parsedJobs = response.runs.map(job => parseJob(job))
             const responseAbortingJobs = parsedJobs.reduce((acc, job) => {
-              if (job.state.value === 'aborting' && job.abortTaskId) {
+              if (job.state.value === ABORTING_STATE && job.abortTaskId) {
                 acc[job.abortTaskId] = {
                   uid: job.uid,
                   name: job.name
@@ -196,7 +197,7 @@ export const useJobsPageData = (initialTabData, selectedTab) => {
       setScheduledJobs([])
       abortControllerRef.current = new AbortController()
 
-      dispatch(
+      return dispatch(
         fetchScheduledJobs({
           project: filters.project ? filters.project.toLowerCase() : params.projectName || '*',
           filters,
@@ -215,7 +216,11 @@ export const useJobsPageData = (initialTabData, selectedTab) => {
               .map(job => parseJob(job, SCHEDULE_TAB))
               .filter(job => {
                 return (
-                  !filters.type || filters.type === FILTER_ALL_ITEMS || job.type === filters.type
+                  !filters.type ||
+                  filters.type === FILTER_ALL_ITEMS ||
+                  job.type === filters.type ||
+                  (Array.isArray(filters.type) && filters.type.includes(job.type)) ||
+                  filters.type.includes(FILTER_ALL_ITEMS)
                 )
               })
 

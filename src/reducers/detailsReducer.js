@@ -17,41 +17,42 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import { DATE_FILTER_ANY_TIME, DEFAULT_ABORT_MSG } from '../constants'
+import { isEmpty } from 'lodash'
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import detailsApi from '../api/details-api'
+
 import { generatePods } from '../utils/generatePods'
-import modelEndpointsApi from '../api/modelEndpoints-api'
 import {
   generateMetricsItems,
   parseMetrics
 } from '../components/DetailsMetrics/detailsMetrics.util'
-import { isEmpty } from 'lodash'
+import { parseArtifacts } from '../utils/parseArtifacts'
+import { generateArtifacts } from '../utils/generateArtifacts'
+import { filterArtifacts } from '../utils/filterArtifacts'
 import { TIME_FRAME_LIMITS } from '../utils/datePicker.util'
 import { largeResponseCatchHandler } from '../utils/largeResponseCatchHandler'
+import artifactsApi from '../api/artifacts-api'
+import modelEndpointsApi from '../api/modelEndpoints-api'
+import detailsApi from '../api/details-api'
+
+import { DATE_FILTER_ANY_TIME, DEFAULT_ABORT_MSG, LLM_PROMPTS_PAGE } from '../constants'
 
 const initialState = {
-  changes: {
-    counter: 0,
-    data: {}
-  },
   dates: {
     value: DATE_FILTER_ANY_TIME,
     selectedOptionId: '',
     isPredefined: false
   },
-  detailsPopUpInfoContent: {},
   detailsJobPods: {
     loading: true,
     podsList: [],
     podsPending: [],
     podsTooltip: []
   },
-  editMode: false,
   error: null,
-  infoContent: {},
   iteration: '',
   iterationOptions: [],
+  runAttempt: '0',
+  runAttemptOptions: [],
   loadingCounter: 0,
   modelFeatureVectorData: {},
   pods: {
@@ -60,8 +61,10 @@ const initialState = {
     podsPending: [],
     podsTooltip: []
   },
-  filtersWasHandled: false,
-  showWarning: false,
+  llmPromptsArtifacts: {
+    data: [],
+    loading: false
+  },
   metricsOptions: {
     all: [],
     lastSelected: [],
@@ -103,15 +106,38 @@ export const fetchJobPods = createAsyncThunk('fetchJobPods', ({ project, uid, ki
     .catch(error => thunkAPI.rejectWithValue(error))
 })
 
+export const fetchLLMPromptArtifacts = createAsyncThunk(
+  'fetchLLMPromptArtifacts',
+  ({ project, filters, config }, thunkAPI) => {
+    return artifactsApi
+      .getLLMPrompts(project, filters, config)
+      .then(({ data }) => {
+        const result = parseArtifacts(data.artifacts)
+
+        return generateArtifacts(filterArtifacts(result), LLM_PROMPTS_PAGE, data.artifacts)
+      })
+      .catch(error => {
+        largeResponseCatchHandler(
+          error,
+          'Failed to fetch LLM prompts',
+          thunkAPI.dispatch,
+          config?.ui?.setRequestErrorMessage
+        )
+
+        throw error
+      })
+  }
+)
+
 export const fetchModelEndpointMetrics = createAsyncThunk(
   'fetchEndpointMetrics',
-  ({ project, uid }, thunkAPI) => {
+  ({ project, uid, applicationName = '' }, thunkAPI) => {
     return modelEndpointsApi
       .getModelEndpointMetrics(project, uid)
       .then(({ data = [] }) => {
-        const metrics = generateMetricsItems(data)
+        const metrics = generateMetricsItems(data, applicationName)
 
-        return { endpointUid: uid, metrics }
+        return { endpointUid: uid, metrics, applicationName }
       })
       .catch(error => thunkAPI.rejectWithValue(error))
   }
@@ -136,7 +162,7 @@ export const fetchModelEndpointMetricsValues = createAsyncThunk(
       .getModelEndpointMetricsValues(project, uid, config)
       .then(({ data = [] }) => {
         const differenceInDays = params.end - params.start
-        const timeUnit = differenceInDays > TIME_FRAME_LIMITS['24_HOURS'] ? 'days' : 'hours'
+        const timeUnit = differenceInDays > TIME_FRAME_LIMITS['24_HOURS'] ? 'day' : 'hour'
 
         return parseMetrics(data, timeUnit)
       })
@@ -156,14 +182,11 @@ const detailsStoreSlice = createSlice({
   name: 'detailsStore',
   initialState,
   reducers: {
+    removeDetailsLLMPrompts(state) {
+      state.llmPromptsArtifacts = initialState.llmPromptsArtifacts
+    },
     removeDetailsPods(state) {
       state.detailsJobPods = initialState.detailsJobPods
-    },
-    removeDetailsPopUpInfoContent(state) {
-      state.detailsPopUpInfoContent = {}
-    },
-    removeInfoContent(state) {
-      state.infoContent = {}
     },
     removeModelFeatureVector(state) {
       state.modelFeatureVectorData = initialState.modelFeatureVectorData
@@ -171,38 +194,20 @@ const detailsStoreSlice = createSlice({
     removePods(state) {
       state.pods = initialState.pods
     },
-    resetChanges(state) {
-      state.changes = initialState.changes
-    },
-    setChanges(state, action) {
-      state.changes = action.payload
-    },
-    setChangesCounter(state, action) {
-      state.changes.counter = action.payload
-    },
-    setChangesData(state, action) {
-      state.changes.data = action.payload
-    },
     setDetailsDates(state, action) {
       state.dates = action.payload
-    },
-    setDetailsPopUpInfoContent(state, action) {
-      state.detailsPopUpInfoContent = action.payload
-    },
-    setEditMode(state, action) {
-      state.editMode = action.payload
-    },
-    setFiltersWasHandled(state, action) {
-      state.filtersWasHandled = action.payload
-    },
-    setInfoContent(state, action) {
-      state.infoContent = action.payload
     },
     setIteration(state, action) {
       state.iteration = action.payload
     },
     setIterationOption(state, action) {
       state.iterationOptions = action.payload
+    },
+    setRunAttempt(state, action) {
+      state.runAttempt = action.payload
+    },
+    setRunAttemptOptions(state, action) {
+      state.runAttemptOptions = action.payload
     },
     setSelectedMetricsOptions(state, action) {
       state.metricsOptions = {
@@ -214,8 +219,19 @@ const detailsStoreSlice = createSlice({
         }
       }
     },
-    showWarning(state, action) {
-      state.showWarning = action.payload
+    increaseDetailsLoadingCounter(state) {
+      state.loadingCounter = state.loadingCounter + 1
+    },
+    decreaseDetailsLoadingCounter(state) {
+      state.loadingCounter = state.loadingCounter - 1
+    },
+    clearMetricsOptions(state) {
+      state.metricsOptions = {
+        all: [],
+        lastSelected: [],
+        preselected: [],
+        selectedByEndpoint: {}
+      }
     }
   },
   extraReducers: builder => {
@@ -253,6 +269,17 @@ const detailsStoreSlice = createSlice({
     builder.addCase(fetchJobPods.rejected, (state, action) => {
       state.pods.loading = false
       state.error = action.payload
+    })
+    builder.addCase(fetchLLMPromptArtifacts.pending, state => {
+      state.llmPromptsArtifacts.loading = true
+    })
+    builder.addCase(fetchLLMPromptArtifacts.fulfilled, (state, action) => {
+      state.llmPromptsArtifacts.data = action.payload
+      state.llmPromptsArtifacts.loading = false
+    })
+    builder.addCase(fetchLLMPromptArtifacts.rejected, state => {
+      state.llmPromptsArtifacts.data = []
+      state.llmPromptsArtifacts.loading = false
     })
     builder.addCase(fetchModelEndpointMetrics.pending, state => {
       state.loadingCounter = state.loadingCounter + 1
@@ -306,24 +333,19 @@ const detailsStoreSlice = createSlice({
 })
 
 export const {
+  removeDetailsLLMPrompts,
   removeDetailsPods,
-  removeDetailsPopUpInfoContent,
-  removeInfoContent,
   removeModelFeatureVector,
   removePods,
-  resetChanges,
-  setChanges,
-  setChangesCounter,
-  setChangesData,
   setDetailsDates,
-  setDetailsPopUpInfoContent,
-  setEditMode,
-  setFiltersWasHandled,
-  setInfoContent,
   setIteration,
   setIterationOption,
+  setRunAttempt,
+  setRunAttemptOptions,
   setSelectedMetricsOptions,
-  showWarning
+  increaseDetailsLoadingCounter,
+  decreaseDetailsLoadingCounter,
+  clearMetricsOptions
 } = detailsStoreSlice.actions
 
 export default detailsStoreSlice.reducer

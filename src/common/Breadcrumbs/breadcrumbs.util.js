@@ -39,7 +39,7 @@ import {
 } from '../../constants'
 import { generateNuclioLink } from '../../utils'
 
-export const generateMlrunScreens = (params, isDemo) =>
+export const generateMlrunScreens = params =>
   params.projectName
     ? [
         {
@@ -48,15 +48,16 @@ export const generateMlrunScreens = (params, isDemo) =>
         },
         {
           label: 'Quick actions',
-          id: PROJECT_QUICK_ACTIONS_PAGE
+          id: PROJECT_QUICK_ACTIONS_PAGE,
+          hidden: true
         },
         { label: 'Feature store', id: 'feature-store' },
         { label: 'Datasets', id: 'datasets' },
         { label: 'Documents', id: DOCUMENTS_PAGE },
-        { label: 'LLM prompts', id: LLM_PROMPTS_PAGE, hidden: !isDemo },
+        { label: 'LLM prompts', id: LLM_PROMPTS_PAGE },
         { label: 'Artifacts', id: 'files' },
         { label: 'Models', id: 'models' },
-        { label: 'Monitoring app', id: MONITORING_APP_PAGE, hidden: !isDemo },
+        { label: 'Monitoring app', id: MONITORING_APP_PAGE },
         { label: 'Jobs and workflows', id: 'jobs' },
         { label: 'ML functions', id: 'functions' },
         {

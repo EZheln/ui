@@ -22,33 +22,31 @@ import { useDispatch, useSelector } from 'react-redux'
 import { isEmpty } from 'lodash'
 import { useParams } from 'react-router-dom'
 
-import Loader from '../../common/Loader/Loader'
+import ConsumerGroupShardLagTableRow from '../../elements/ConsumerGroupShardLagTableRow/ConsumerGroupShardLagTableRow'
 import NoData from '../../common/NoData/NoData'
 import PageHeader from '../../elements/PageHeader/PageHeader'
-import Table from '../Table/Table'
-import { RoundedIcon } from 'igz-controls/components'
-import ConsumerGroupShardLagTableRow from '../../elements/ConsumerGroupShardLagTableRow/ConsumerGroupShardLagTableRow'
 import Search from '../../common/Search/Search'
+import Table from '../Table/Table'
+import { RoundedIcon, Loader } from 'igz-controls/components'
 
-import {
-  CONSUMER_GROUP_PAGE,
-  NAME_FILTER
-} from '../../constants.js'
+import { CONSUMER_GROUP_PAGE, NAME_FILTER } from '../../constants.js'
 import createConsumerGroupContent from '../../utils/createConsumerGroupContent'
-import { fetchNuclioV3ioStreamShardLags, resetV3ioStreamShardLagsError } from '../../reducers/nuclioReducer.js'
+import {
+  fetchNuclioV3ioStreamShardLags,
+  resetV3ioStreamShardLagsError
+} from '../../reducers/nuclioReducer.js'
 import { generatePageData } from './consumerGroup.util.js'
 import { getNoDataMessage } from '../../utils/getNoDataMessage'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 
 import RefreshIcon from 'igz-controls/images/refresh.svg?react'
-
 
 const ConsumerGroup = () => {
   const [currentV3ioStream, setCurrentV3ioStream] = useState([])
   const [requestErrorMessage, setRequestErrorMessage] = useState('')
   const [filteredV3ioStreamShardLags, setFilteredV3ioStreamShardLags] = useState([])
   const filtersStore = useSelector(store => store.filtersStore)
-  const nuclioStore = useSelector((store) => store.nuclioStore)
+  const nuclioStore = useSelector(store => store.nuclioStore)
   const [localFilters, setLocalFilters] = useState({ [NAME_FILTER]: '' })
   const params = useParams()
   const dispatch = useDispatch()
@@ -78,7 +76,9 @@ const ConsumerGroup = () => {
         streamPath: currentV3ioStream.streamPath
       }
       setRequestErrorMessage('')
-      dispatch(fetchNuclioV3ioStreamShardLags({ project: params.projectName, body: fetchV3ioStreamBody }))
+      dispatch(
+        fetchNuclioV3ioStreamShardLags({ project: params.projectName, body: fetchV3ioStreamBody })
+      )
     },
     [dispatch, params.projectName]
   )

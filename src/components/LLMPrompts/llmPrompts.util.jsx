@@ -21,25 +21,29 @@ import React from 'react'
 
 import {
   ARTIFACT_MAX_DOWNLOAD_SIZE,
-  FULL_VIEW_MODE,
-  LLM_PROMPT_TYPE,
-  LLM_PROMPTS_PAGE
+  ITERATIONS_FILTER,
+  LABELS_FILTER,
+  LLM_PROMPTS_PAGE,
+  MODEL_NAME_FILTER,
+  MODEL_TAG_FILTER,
+  NAME_FILTER,
+  SHOW_ITERATIONS,
+  TAG_FILTER,
+  TAG_FILTER_ALL_ITEMS,
+  TAG_FILTER_LATEST
 } from '../../constants'
-import { getIsTargetPathValid } from '../../utils/createArtifactsContent'
 import { applyTagChanges, chooseOrFetchArtifact } from '../../utils/artifacts.util'
-import { setDownloadItem, setShowDownloadsList } from '../../reducers/downloadReducer'
 import { copyToClipboard } from '../../utils/copyToClipboard'
 import { generateUri } from '../../utils/resources'
-import { openDeleteConfirmPopUp, openPopUp } from 'igz-controls/utils/common.util'
-import DeleteArtifactPopUp from '../../elements/DeleteArtifactPopUp/DeleteArtifactPopUp'
-import { handleDeleteArtifact } from '../../utils/handleDeleteArtifact'
+import { getIsTargetPathValid } from '../../utils/createArtifactsContent'
+import { setDownloadItem, setShowDownloadsList } from '../../reducers/downloadReducer'
 import { showArtifactsPreview } from '../../reducers/artifactsReducer'
+import { FULL_VIEW_MODE } from 'igz-controls/constants'
 
 import TagIcon from 'igz-controls/images/tag-icon.svg?react'
 import YamlIcon from 'igz-controls/images/yaml.svg?react'
 import ArtifactView from 'igz-controls/images/eye-icon.svg?react'
 import Copy from 'igz-controls/images/copy-to-clipboard-icon.svg?react'
-import Delete from 'igz-controls/images/delete.svg?react'
 import DownloadIcon from 'igz-controls/images/download.svg?react'
 import HistoryIcon from 'igz-controls/images/history.svg?react'
 
@@ -49,17 +53,19 @@ export const detailsMenu = [
     id: 'overview'
   },
   {
-    label: 'prompt-template',
-    id: 'Prompt template'
+    label: 'Prompt template',
+    id: 'prompt-template'
   },
   {
-    label: 'generation-configuration',
-    id: 'Generation configuration'
+    label: 'Invocation configuration',
+    id: 'invocation-configuration'
   }
 ]
 
 export const infoHeaders = [
   { label: 'Key', id: 'db_key' },
+  { label: 'Description', id: 'description' },
+  { label: 'Model name', id: 'model_artifact' },
   {
     label: 'Hash',
     id: 'hash',
@@ -75,14 +81,14 @@ export const infoHeaders = [
   { label: 'Labels', id: 'labels' }
 ]
 
-export const generatePageData = viewMode => {
+export const generatePageData = (viewMode, isDetailsPopUp = false) => {
   return {
     page: LLM_PROMPTS_PAGE,
     details: {
       type: LLM_PROMPTS_PAGE,
       menu: detailsMenu,
       infoHeaders,
-      hideBackBtn: viewMode === FULL_VIEW_MODE,
+      hideBackBtn: viewMode === FULL_VIEW_MODE && !isDetailsPopUp,
       withToggleViewBtn: true
     }
   }
@@ -114,8 +120,9 @@ export const generateActionsMenu = (
   isDetailsPopUp = false
 ) => {
   const isTargetPathValid = getIsTargetPathValid(llmPromptMin ?? {}, frontendSpec)
-  const datasetDataCouldBeDeleted =
-    llmPromptMin?.target_path?.endsWith('.pq') || llmPromptMin?.target_path?.endsWith('.parquet')
+  //TODO: uncomment when MEP delete will be implemented
+  // const llmPromptDataCouldBeDeleted =
+  //   llmPromptMin?.target_path?.endsWith('.pq') || llmPromptMin?.target_path?.endsWith('.parquet')
 
   const getFullLLMPrompt = llmPromptMin => {
     return chooseOrFetchArtifact(dispatch, LLM_PROMPTS_PAGE, null, selectedLLMPrompt, llmPromptMin)
@@ -166,66 +173,68 @@ export const generateActionsMenu = (
         label: 'View YAML',
         icon: <YamlIcon />,
         onClick: llmPromptMin => getFullLLMPrompt(llmPromptMin).then(toggleConvertedYaml)
-      },
-      {
-        label: 'Delete',
-        icon: <Delete />,
-        hidden: isDetailsPopUp,
-        className: 'danger',
-        onClick: () =>
-          datasetDataCouldBeDeleted
-            ? openPopUp(DeleteArtifactPopUp, {
-                artifact: llmPromptMin,
-                artifactType: LLM_PROMPT_TYPE,
-                category: LLM_PROMPT_TYPE,
-                filters: llmPromptsFilters,
-                refreshArtifacts,
-                refreshAfterDeleteCallback
-              })
-            : openDeleteConfirmPopUp(
-                'Delete LLM Prompt?',
-                `Do you want to delete the LLM Prompt "${llmPromptMin.db_key}"? Deleted LLM Prompt can not be restored.`,
-                () => {
-                  handleDeleteArtifact(
-                    dispatch,
-                    projectName,
-                    llmPromptMin.db_key,
-                    llmPromptMin.uid,
-                    refreshArtifacts,
-                    refreshAfterDeleteCallback,
-                    llmPromptsFilters,
-                    LLM_PROMPT_TYPE
-                  )
-                }
-              ),
-        allowLeaveWarning: true
-      },
-      {
-        label: 'Delete all versions',
-        icon: <Delete />,
-        hidden: isDetailsPopUp || isAllVersions,
-        className: 'danger',
-        onClick: () =>
-          openDeleteConfirmPopUp(
-            'Delete LLM Prompt?',
-            `Do you want to delete all versions of the LLM Prompt "${llmPromptMin.db_key}"? Deleted LLM prompt can not be restored.`,
-            () => {
-              handleDeleteArtifact(
-                dispatch,
-                projectName,
-                llmPromptMin.db_key,
-                llmPromptMin.uid,
-                refreshArtifacts,
-                refreshAfterDeleteCallback,
-                llmPromptsFilters,
-                LLM_PROMPT_TYPE,
-                LLM_PROMPT_TYPE,
-                true
-              )
-            }
-          ),
-        allowLeaveWarning: true
       }
+      //TODO: uncomment when MEP delete will be implemented,
+      // correct delete confirmation message ( currently it's shown as Llm-prompt deleted, should be LLM prompt deleted  )
+      // {
+      //   label: 'Delete',
+      //   icon: <Delete />,
+      //   hidden: isDetailsPopUp,
+      //   className: 'danger',
+      //   onClick: () =>
+      //     llmPromptDataCouldBeDeleted
+      //       ? openPopUp(DeleteArtifactPopUp, {
+      //           artifact: llmPromptMin,
+      //           artifactType: LLM_PROMPT_TYPE,
+      //           category: LLM_PROMPT_TYPE,
+      //           filters: llmPromptsFilters,
+      //           refreshArtifacts,
+      //           refreshAfterDeleteCallback
+      //         })
+      //       : openDeleteConfirmPopUp(
+      //           'Delete LLM Prompt?',
+      //           `Do you want to delete the LLM Prompt "${llmPromptMin.db_key}"? Deleted LLM Prompt can not be restored.`,
+      //           () => {
+      //             handleDeleteArtifact(
+      //               dispatch,
+      //               projectName,
+      //               llmPromptMin.db_key,
+      //               llmPromptMin.uid,
+      //               refreshArtifacts,
+      //               refreshAfterDeleteCallback,
+      //               llmPromptsFilters,
+      //               LLM_PROMPT_TYPE
+      //             )
+      //           }
+      //         ),
+      //   allowLeaveWarning: true
+      // },
+      // {
+      //   label: 'Delete all versions',
+      //   icon: <Delete />,
+      //   hidden: isDetailsPopUp || isAllVersions,
+      //   className: 'danger',
+      //   onClick: () =>
+      //     openDeleteConfirmPopUp(
+      //       'Delete LLM Prompt?',
+      //       `Do you want to delete all versions of the LLM Prompt "${llmPromptMin.db_key}"? Deleted LLM prompt can not be restored.`,
+      //       () => {
+      //         handleDeleteArtifact(
+      //           dispatch,
+      //           projectName,
+      //           llmPromptMin.db_key,
+      //           llmPromptMin.uid,
+      //           refreshArtifacts,
+      //           refreshAfterDeleteCallback,
+      //           llmPromptsFilters,
+      //           LLM_PROMPT_TYPE,
+      //           LLM_PROMPT_TYPE,
+      //           true
+      //         )
+      //       }
+      //     ),
+      //   allowLeaveWarning: true
+      // }
     ],
     [
       {
@@ -237,7 +246,7 @@ export const generateActionsMenu = (
       },
       {
         label: 'Preview',
-        id: 'llm-prompt-preview',
+        id: 'artifact-preview',
         disabled: !isTargetPathValid,
         icon: <ArtifactView />,
         onClick: llmPromptMin => {
@@ -256,3 +265,28 @@ export const generateActionsMenu = (
     ]
   ]
 }
+
+export const getFiltersConfig = isAllVersions => ({
+  [NAME_FILTER]: { label: 'Name:', initialValue: '', hidden: isAllVersions },
+  [TAG_FILTER]: {
+    label: 'LLM prompt version tag:',
+    initialValue: isAllVersions ? TAG_FILTER_ALL_ITEMS : TAG_FILTER_LATEST,
+    isModal: true
+  },
+  [LABELS_FILTER]: { label: 'Labels:', initialValue: '', isModal: true },
+  [ITERATIONS_FILTER]: {
+    label: 'Show best iteration only',
+    initialValue: isAllVersions ? '' : SHOW_ITERATIONS,
+    isModal: true
+  },
+  [MODEL_NAME_FILTER]: {
+    label: 'Model name:',
+    initialValue: '',
+    isModal: true
+  },
+  [MODEL_TAG_FILTER]: {
+    label: 'Model version tag:',
+    initialValue: '',
+    isModal: true
+  }
+})

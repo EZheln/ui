@@ -27,21 +27,33 @@ import {
   MODELS_PAGE,
   MODELS_TAB,
   TAG_LATEST,
-  FULL_VIEW_MODE,
   MODEL_TYPE,
-  ARTIFACT_MAX_DOWNLOAD_SIZE
+  ARTIFACT_MAX_DOWNLOAD_SIZE,
+  DETAILS_LLM_PROMPTS_TAB
 } from '../../../constants'
+import {
+  getErrorMsg,
+  openPopUp,
+  openDeleteConfirmPopUp,
+  copyToClipboard
+} from 'igz-controls/utils/common.util'
 import { showArtifactsPreview, updateArtifact } from '../../../reducers/artifactsReducer'
-import { FORBIDDEN_ERROR_STATUS_CODE } from 'igz-controls/constants'
-import { applyTagChanges, chooseOrFetchArtifact } from '../../../utils/artifacts.util'
+import { FORBIDDEN_ERROR_STATUS_CODE, FULL_VIEW_MODE } from 'igz-controls/constants'
+import {
+  applyTagChanges,
+  chooseOrFetchArtifact,
+  processActionAfterTagUniquesValidation
+} from '../../../utils/artifacts.util'
 import { convertChipsData } from '../../../utils/convertChipsData'
-import { copyToClipboard } from '../../../utils/copyToClipboard'
 import { getIsTargetPathValid } from '../../../utils/createArtifactsContent'
 import { generateUri } from '../../../utils/resources'
-import { getErrorMsg, openPopUp, openDeleteConfirmPopUp } from 'igz-controls/utils/common.util'
 import { handleDeleteArtifact } from '../../../utils/handleDeleteArtifact'
 import { setDownloadItem, setShowDownloadsList } from '../../../reducers/downloadReducer'
-import { showErrorNotification } from '../../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
+import {
+  decreaseDetailsLoadingCounter,
+  increaseDetailsLoadingCounter
+} from '../../../reducers/detailsReducer'
 
 import TagIcon from 'igz-controls/images/tag-icon.svg?react'
 import YamlIcon from 'igz-controls/images/yaml.svg?react'
@@ -102,16 +114,22 @@ export const generateModelsDetailsMenu = selectedModel => [
     id: 'statistics',
     hidden: !selectedModel.stats && !selectedModel.feature_stats && !selectedModel.feature_vector,
     tip: 'Note that some values may be empty due to the use of different engines for calculating statistics'
+  },
+  {
+    label: 'LLM Prompts',
+    id: DETAILS_LLM_PROMPTS_TAB,
+    tip: 'All LLM prompt artifacts linked to this model',
+    hidden: !selectedModel.has_children
   }
 ]
 
-export const generatePageData = (viewMode, selectedItem) => ({
+export const generatePageData = (viewMode, isDetailsPopUp = false, selectedItem) => ({
   page: MODELS_PAGE,
   details: {
     menu: generateModelsDetailsMenu(selectedItem),
     infoHeaders,
     type: MODELS_TAB,
-    hideBackBtn: viewMode === FULL_VIEW_MODE,
+    hideBackBtn: viewMode === FULL_VIEW_MODE && !isDetailsPopUp,
     withToggleViewBtn: true
   }
 })
@@ -129,56 +147,69 @@ export const handleApplyDetailsChanges = (
   setNotification,
   dispatch
 ) => {
-  const isNewFormat =
-    selectedItem.ui.originalContent.metadata && selectedItem.ui.originalContent.spec
-  const artifactItem = cloneDeep(
-    isNewFormat ? selectedItem.ui.originalContent : omit(selectedItem, ['ui'])
-  )
+  const updateModel = () => {
+    const isNewFormat =
+      selectedItem.ui.originalContent.metadata && selectedItem.ui.originalContent.spec
+    const artifactItem = cloneDeep(
+      isNewFormat ? selectedItem.ui.originalContent : omit(selectedItem, ['ui'])
+    )
 
-  if (!isEmpty(omit(changes.data, ['tag']))) {
-    Object.keys(changes.data).forEach(key => {
-      if (key === 'labels') {
-        isNewFormat
-          ? (artifactItem.metadata[key] = changes.data[key].currentFieldValue)
-          : (artifactItem[key] = changes.data[key].currentFieldValue)
+    if (!isEmpty(omit(changes.data, ['tag']))) {
+      Object.keys(changes.data).forEach(key => {
+        if (key === 'labels') {
+          isNewFormat
+            ? (artifactItem.metadata[key] = changes.data[key].currentFieldValue)
+            : (artifactItem[key] = changes.data[key].currentFieldValue)
+        }
+      })
+
+      const labels = convertChipsData(artifactItem.metadata?.labels || artifactItem.labels)
+
+      if (isNewFormat) {
+        artifactItem.metadata.labels = labels
+      } else {
+        artifactItem.labels = labels
       }
-    })
 
-    const labels = convertChipsData(artifactItem.metadata?.labels || artifactItem.labels)
+      return dispatch(updateArtifact({ project: projectName, data: artifactItem }))
+        .unwrap()
+        .then(response => {
+          dispatch(
+            setNotification({
+              status: response.status,
+              id: Math.random(),
+              message: 'Model was updated successfully'
+            })
+          )
+        })
+        .catch(error => {
+          const customErrorMsg =
+            error.response?.status === FORBIDDEN_ERROR_STATUS_CODE
+              ? 'Permission denied'
+              : getErrorMsg(error, 'Failed to update the model')
 
-    if (isNewFormat) {
-      artifactItem.metadata.labels = labels
+          showErrorNotification(dispatch, error, '', customErrorMsg, () =>
+            handleApplyDetailsChanges(changes, projectName, selectedItem, setNotification, dispatch)
+          )
+        })
+        .finally(() => {
+          return applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification)
+        })
     } else {
-      artifactItem.labels = labels
+      return applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification)
     }
-
-    return dispatch(updateArtifact({ project: projectName, data: artifactItem }))
-      .unwrap()
-      .then(response => {
-        dispatch(
-          setNotification({
-            status: response.status,
-            id: Math.random(),
-            message: 'Model was updated successfully'
-          })
-        )
-      })
-      .catch(error => {
-        const customErrorMsg =
-          error.response?.status === FORBIDDEN_ERROR_STATUS_CODE
-            ? 'Permission denied'
-            : getErrorMsg(error, 'Failed to update the model')
-
-        showErrorNotification(dispatch, error, '', customErrorMsg, () =>
-          handleApplyDetailsChanges(changes, projectName, selectedItem, setNotification, dispatch)
-        )
-      })
-      .finally(() => {
-        return applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification)
-      })
-  } else {
-    return applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification)
   }
+
+  return processActionAfterTagUniquesValidation({
+    tag: changes?.data?.tag?.currentFieldValue,
+    artifact: selectedItem,
+    projectName,
+    dispatch,
+    actionCallback: updateModel,
+    throwError: true,
+    showLoader: () => dispatch(increaseDetailsLoadingCounter()),
+    hideLoader: () => dispatch(decreaseDetailsLoadingCounter())
+  }).finally(() => {})
 }
 
 export const generateActionsMenu = (
@@ -217,6 +248,7 @@ export const generateActionsMenu = (
         disabled:
           !isTargetPathValid ||
           modelMin.size >
+            modelMin.size >
             (frontendSpec?.artifact_limits?.max_download_size ?? ARTIFACT_MAX_DOWNLOAD_SIZE),
         icon: <DownloadIcon />,
         onClick: modelMin => {
@@ -253,6 +285,10 @@ export const generateActionsMenu = (
         icon: <Delete />,
         className: 'danger',
         hidden: isDetailsPopUp,
+        disabled: modelMin?.has_children,
+        tooltip: modelMin?.has_children
+          ? 'There are llm-prompt artifacts pointing to this model. The model cannot be deleted'
+          : null,
         onClick: () =>
           openDeleteConfirmPopUp(
             'Delete model?',
@@ -276,6 +312,10 @@ export const generateActionsMenu = (
         label: 'Delete all versions',
         icon: <Delete />,
         hidden: isAllVersions || isDetailsPopUp,
+        disabled: modelMin?.has_children,
+        tooltip: modelMin?.has_children
+          ? 'There are llm-prompt artifacts pointing to this model. The model cannot be deleted'
+          : null,
         className: 'danger',
         onClick: () =>
           openDeleteConfirmPopUp(

@@ -21,17 +21,19 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import classnames from 'classnames'
 
-import ActionsMenu from '../../common/ActionsMenu/ActionsMenu'
-import TableCell from '../TableCell/TableCell'
+import { TableCell, ActionsMenu } from 'igz-controls/components'
 
-import { ACTIONS_MENU } from '../../types'
+import { ACTIONS_MENU } from 'igz-controls/types'
 
-const ApplicationTableRow = ({
-  actionsMenu,
-  hideActionsMenu = false,
-  rowItem
-}) => {
-  const rowClassNames = classnames('table-row', 'table-body-row', 'parent-row')
+import './applicationTableRow.scss'
+
+const ApplicationTableRow = ({ actionsMenu, hideActionsMenu = false, rowItem }) => {
+  const rowClassNames = classnames(
+    'table-row',
+    'table-body-row',
+    'parent-row',
+    'application-table-row'
+  )
 
   return (
     <tr className={rowClassNames}>
@@ -40,7 +42,7 @@ const ApplicationTableRow = ({
           return (
             !value.hidden && (
               <TableCell
-                data={value}
+                cellData={value}
                 firstCell={index === 0}
                 item={rowItem.data}
                 key={value.id}

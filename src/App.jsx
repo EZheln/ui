@@ -33,14 +33,15 @@ import 'prismjs/components/prism-yaml.min.js'
 import 'prismjs/components/prism-json.min.js'
 import 'prismjs/components/prism-python.min.js'
 
+import { LoaderForSuspenseFallback } from 'igz-controls/components'
 import Header from './layout/Header/Header'
-import LoaderForSuspenseFallback from './common/Loader/LoaderForSuspenseFallback'
 import Notifications from './common/Notifications/Notifications'
 
 import localStorageService from './utils/localStorageService'
 import { lazyRetry } from './lazyWithRetry'
 import { useMode } from './hooks/mode.hook'
 import { useNuclioMode } from './hooks/nuclioMode.hook'
+import wrapComponentForNavbarNavigationTracking from './utils/wrapComponentForNavbarNavigationTracking'
 
 import {
   ALERTS_PAGE_PATH,
@@ -124,6 +125,9 @@ const WorkflowsMonitoring = lazyRetry(
 )
 const Documents = lazyRetry(() => import('./components/Documents/Documents'))
 const LLMPrompts = lazyRetry(() => import('./components/LLMPrompts/LLMPrompts'))
+const ApplicationMetrics = lazyRetry(
+  () => import('./components/ApplicationMetrics/ApplicationMetrics')
+)
 
 const MonitoringApplicationsPage = lazyRetry(
   () => import('./components/MonitoringApplicationsPage/MonitoringApplicationsPage')
@@ -134,9 +138,7 @@ const MonitoringApplications = lazyRetry(
 )
 const MonitoringApplication = lazyRetry(
   () =>
-    import(
-      './components/MonitoringApplicationsPage/MonitoringApplications/MonitoringApplication/MonitoringApplication'
-    )
+    import('./components/MonitoringApplicationsPage/MonitoringApplications/MonitoringApplication/MonitoringApplication')
 )
 
 const App = () => {
@@ -144,6 +146,13 @@ const App = () => {
   const { isDemoMode } = useMode()
   const isHeaderShown = localStorageService.getStorageValue('mlrunUi.headerHidden') !== 'true'
   const mlAppContainerClasses = classNames('ml-app-container', isHeaderShown && 'has-header')
+
+  const FilesComponent = wrapComponentForNavbarNavigationTracking(Files)
+  const DatasetsComponent = wrapComponentForNavbarNavigationTracking(Datasets)
+  const DocumentsComponent = wrapComponentForNavbarNavigationTracking(Documents)
+  const LLMPromptsComponent = wrapComponentForNavbarNavigationTracking(LLMPrompts)
+  const FunctionsOldComponent = wrapComponentForNavbarNavigationTracking(FunctionsOld)
+  const FunctionsComponent = wrapComponentForNavbarNavigationTracking(Functions)
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -252,7 +261,7 @@ const App = () => {
                 <Fragment key={index}>
                   <Route
                     path={path}
-                    element={<Functions isAllVersions={[2, 3].includes(index)} />}
+                    element={<FunctionsComponent isAllVersions={[2, 3].includes(index)} />}
                   />
                 </Fragment>
               ))
@@ -262,7 +271,7 @@ const App = () => {
                 'projects/:projectName/functions/:funcName/:tag/:tab'
               ].map((path, index) => (
                 <Fragment key={index}>
-                  <Route path={path} element={<FunctionsOld />} />
+                  <Route path={path} element={<FunctionsOldComponent />} />
                 </Fragment>
               ))}
           {[
@@ -272,7 +281,10 @@ const App = () => {
             `projects/:projectName/datasets/:artifactName/${ALL_VERSIONS_PATH}/:id/:tab`
           ].map((path, index) => (
             <Fragment key={index}>
-              <Route path={path} element={<Datasets isAllVersions={[2, 3].includes(index)} />} />
+              <Route
+                path={path}
+                element={<DatasetsComponent isAllVersions={[2, 3].includes(index)} />}
+              />
             </Fragment>
           ))}
           <Route
@@ -334,7 +346,18 @@ const App = () => {
             `projects/:projectName/files/:artifactName/${ALL_VERSIONS_PATH}/:id/:tab`
           ].map((path, index) => (
             <Fragment key={index}>
-              <Route path={path} element={<Files isAllVersions={[2, 3].includes(index)} />} />
+              <Route
+                path={path}
+                element={<FilesComponent isAllVersions={[2, 3].includes(index)} />}
+              />
+            </Fragment>
+          ))}
+          {[
+            `projects/:projectName/monitoring-app/:appName/${MODEL_ENDPOINTS_TAB}`,
+            `projects/:projectName/monitoring-app/:appName/${MODEL_ENDPOINTS_TAB}/:id`
+          ].map((path, index) => (
+            <Fragment key={index}>
+              <Route path={path} element={<ApplicationMetrics />} />
             </Fragment>
           ))}
           <Route
@@ -355,7 +378,10 @@ const App = () => {
             `projects/:projectName/documents/:artifactName/${ALL_VERSIONS_PATH}/:id/:tab`
           ].map((path, index) => (
             <Fragment key={index}>
-              <Route path={path} element={<Documents isAllVersions={[2, 3].includes(index)} />} />
+              <Route
+                path={path}
+                element={<DocumentsComponent isAllVersions={[2, 3].includes(index)} />}
+              />
             </Fragment>
           ))}
           {[
@@ -365,7 +391,10 @@ const App = () => {
             `projects/:projectName/llm-prompts/:artifactName/${ALL_VERSIONS_PATH}/:id/:tab`
           ].map((path, index) => (
             <Fragment key={index}>
-              <Route path={path} element={<LLMPrompts isAllVersions={[2, 3].includes(index)} />} />
+              <Route
+                path={path}
+                element={<LLMPromptsComponent isAllVersions={[2, 3].includes(index)} />}
+              />
             </Fragment>
           ))}
           <Route path="*" element={<Navigate replace to="projects" />} />

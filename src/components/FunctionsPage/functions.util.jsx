@@ -25,7 +25,7 @@ import {
   FUNCTION_CREATING_STATE,
   ERROR_STATE,
   FUNCTION_INITIALIZED_STATE,
-  FUNCTION_PENDINDG_STATE,
+  FUNCTION_PENDING_STATE,
   FUNCTION_READY_STATE,
   FUNCTION_RUN_KINDS,
   FUNCTION_RUNNING_STATE,
@@ -50,8 +50,8 @@ import { getFunctionLogs, getFunctionNuclioLogs } from '../../utils/getFunctionL
 import { parseFunction } from '../../utils/parseFunction'
 import { parseIdentifier } from '../../utils'
 import { setJobFunction } from '../../reducers/jobReducer'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 
 import Delete from 'igz-controls/images/delete.svg?react'
 import Run from 'igz-controls/images/run.svg?react'
@@ -95,7 +95,7 @@ export const infoHeaders = [
   { label: 'Image', id: 'image' },
   { label: 'Description', id: 'description' }
 ]
-export const TRANSIENT_FUNCTION_STATUSES = [FUNCTION_PENDINDG_STATE, FUNCTION_RUNNING_STATE]
+export const TRANSIENT_FUNCTION_STATUSES = [FUNCTION_PENDING_STATE, FUNCTION_RUNNING_STATE]
 
 const handleFetchFunctionLogs = (
   dispatch,
@@ -153,7 +153,7 @@ export const generateFunctionsPageData = (
   fetchFunctionNuclioLogsTimeout,
   navigate,
   fetchData,
-  filtersStore,
+  filtersStore
   // showAllVersion
 ) => {
   const showAdditionalLogs = selectedFunction.type === FUNCTION_TYPE_APPLICATION

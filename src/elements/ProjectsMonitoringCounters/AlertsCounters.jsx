@@ -17,15 +17,17 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
+import classNames from 'classnames'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import classNames from 'classnames'
+import { defaults } from 'lodash'
 
-import Loader from '../../common/Loader/Loader'
+import { Loader, PopUpDialog } from 'igz-controls/components'
 import StatsCard from '../../common/StatsCard/StatsCard'
 
 import { generateAlertsStats } from '../../utils/generateAlertsStats'
+import { countTotalValue } from '../../utils/generateMonitoringData'
 
 import Alerts from 'igz-controls/images/alerts.svg?react'
 import ClockIcon from 'igz-controls/images/clock.svg?react'
@@ -33,23 +35,31 @@ import ClockIcon from 'igz-controls/images/clock.svg?react'
 import './projectsMonitoringCounters.scss'
 
 const AlertsCounters = () => {
+  const anchorRef = useRef(null)
+  const detailsRef = useRef(null)
+  const [showPopup, setShowPopup] = useState(false)
   const { projectName: paramProjectName } = useParams()
   const navigate = useNavigate()
   const projectStore = useSelector(store => store.projectStore)
+  const isDataLoading =
+    projectStore?.projectsSummary?.loading || projectStore?.projectSummary?.loading
+
+  const handleOpenPopUp = () => {
+    const isHidden = !detailsRef.current?.offsetParent
+    setShowPopup(isHidden)
+  }
+
+  const handleClosePopUp = () => {
+    setShowPopup(false)
+  }
 
   const alertsData = useMemo(() => {
     const projectName = paramProjectName ? paramProjectName : '*'
-    const defaultAlertData = {
-      endpoint: 0,
-      jobs: 0,
-      application: 0,
-      total: 0
-    }
 
     if (projectName !== '*') {
-      const endpoint = projectStore.projectSummary.data.endpoint_alerts_count || 0
-      const jobs = projectStore.projectSummary.data.job_alerts_count || 0
-      const application = projectStore.projectSummary.data.other_alerts_count || 0
+      const endpoint = projectStore?.projectSummary?.data?.endpoint_alerts_count
+      const jobs = projectStore?.projectSummary?.data?.job_alerts_count
+      const application = projectStore?.projectSummary?.data?.other_alerts_count
 
       return {
         projectName,
@@ -57,21 +67,21 @@ const AlertsCounters = () => {
           endpoint,
           jobs,
           application,
-          total: endpoint + jobs + application
+          total: countTotalValue([endpoint, jobs, application])
         }
       }
     }
 
     return {
       projectName,
-      data: projectStore.jobsMonitoringData.alerts || defaultAlertData
+      data: defaults({}, projectStore?.jobsMonitoringData?.alerts)
     }
   }, [
     paramProjectName,
-    projectStore.jobsMonitoringData.alerts,
-    projectStore.projectSummary.data.endpoint_alerts_count,
-    projectStore.projectSummary.data.job_alerts_count,
-    projectStore.projectSummary.data.other_alerts_count
+    projectStore?.jobsMonitoringData?.alerts,
+    projectStore?.projectSummary?.data?.endpoint_alerts_count,
+    projectStore?.projectSummary?.data?.job_alerts_count,
+    projectStore?.projectSummary?.data?.other_alerts_count
   ])
 
   const alertsStats = useMemo(
@@ -87,80 +97,102 @@ const AlertsCounters = () => {
 
   return (
     <StatsCard className={alertsCardClass}>
-      <StatsCard.Header title="Alerts" icon={<Alerts />} iconClass="stats-card__title-icon">
-        <StatsCard.Col>
+      <div ref={anchorRef}>
+        <StatsCard.Header title="Alerts" icon={<Alerts />} iconClass="stats-card__title-icon">
           <div className="project-card__info">
-            <div
+            <ClockIcon className="project-card__info-icon" />
+            <span>Last 24 hrs</span>
+          </div>
+        </StatsCard.Header>
+        <div onMouseEnter={handleOpenPopUp} onMouseLeave={handleClosePopUp}>
+          <StatsCard.Row>
+            <StatsCard.MainCounter
               className="stats__link"
-              data-testid="alerts_total_counter"
-              onClick={alertsStats.total.link}
+              id="alerts_total_counter"
+              onClick={alertsStats?.total?.link}
             >
-              <span className="stats__subtitle">Total</span>
-              <div className="stats__counter">
-                {projectStore.projectsSummary.loading ? (
-                  <Loader section small secondary />
-                ) : (
-                  (alertsData.data.total || 0).toLocaleString()
-                )}
+              {isDataLoading ? (
+                <Loader section small secondary />
+              ) : (
+                alertsStats.total?.counter?.toLocaleString?.()
+              )}
+            </StatsCard.MainCounter>
+          </StatsCard.Row>
+          <StatsCard.Col></StatsCard.Col>
+          <div ref={detailsRef} className="stats__details">
+            <StatsCard.Row>
+              <div
+                onClick={alertsStats.endpoints.link}
+                className="stats__line stats__link"
+                data-testid="alerts_endpoints_counter"
+              >
+                <h6 className="stats__subtitle">Endpoint</h6>
+                <StatsCard.SecondaryCounter>
+                  {isDataLoading ? (
+                    <Loader section small secondary />
+                  ) : (
+                    alertsStats.endpoints?.counter?.toLocaleString?.()
+                  )}
+                </StatsCard.SecondaryCounter>
               </div>
-            </div>
-            <div className="project-card__info-icon">
-              <ClockIcon />
-            </div>
-            <span>Past 24 hours</span>
+            </StatsCard.Row>
+            <StatsCard.Row>
+              <div
+                className="stats__line stats__link"
+                data-testid="alerts_job_counter"
+                onClick={alertsStats?.job?.link}
+              >
+                <h6 className="stats__subtitle">Jobs</h6>
+                <StatsCard.SecondaryCounter>
+                  {isDataLoading ? (
+                    <Loader section small secondary />
+                  ) : (
+                    alertsStats.job?.counter?.toLocaleString?.()
+                  )}
+                </StatsCard.SecondaryCounter>
+              </div>
+            </StatsCard.Row>
+            <StatsCard.Row>
+              <div
+                onClick={alertsStats.application.link}
+                className="stats__line stats__link"
+                data-testid="alerts_application_counter"
+              >
+                <div className="stats__subtitle">Application</div>
+                <StatsCard.SecondaryCounter>
+                  {isDataLoading ? (
+                    <Loader section small secondary />
+                  ) : (
+                    alertsStats.application?.counter?.toLocaleString?.()
+                  )}
+                </StatsCard.SecondaryCounter>
+              </div>
+            </StatsCard.Row>
           </div>
-        </StatsCard.Col>
-      </StatsCard.Header>
-      <StatsCard.Row>
-        <StatsCard.Col>
-          <div
-            className="stats__link"
-            onClick={alertsStats.endpoints.link}
-            data-testid="alerts_endpoint_counter"
-          >
-            <div className="stats__counter stats__counter-large">
-              {projectStore.projectsSummary.loading ? (
-                <Loader section small secondary />
-              ) : (
-                (alertsData.data.endpoint || 0).toLocaleString()
-              )}
-            </div>
-            <h6 className="stats__subtitle">Endpoint</h6>
-          </div>
-        </StatsCard.Col>
-        <StatsCard.Col>
-          <div
-            className="stats__link"
-            onClick={alertsStats.job.link}
-            data-testid="alerts_jobs_counter"
-          >
-            <div className="stats__counter stats__counter-large">
-              {projectStore.projectsSummary.loading ? (
-                <Loader section small secondary />
-              ) : (
-                (alertsData.data.jobs || 0).toLocaleString()
-              )}
-            </div>
-            <h6 className="stats__subtitle">Jobs</h6>
-          </div>
-        </StatsCard.Col>
-        <StatsCard.Col>
-          <div
-            className="stats__link"
-            onClick={alertsStats.application.link}
-            data-testid="alerts_application_counter stats__counter-large"
-          >
-            <div className="stats__counter">
-              {projectStore.projectsSummary.loading ? (
-                <Loader section small secondary />
-              ) : (
-                (alertsData.data.application || 0).toLocaleString()
-              )}
-            </div>
-            <h6 className="stats__subtitle">Application</h6>
-          </div>
-        </StatsCard.Col>
-      </StatsCard.Row>
+          {showPopup && (
+            <PopUpDialog
+              className="card-popup"
+              customPosition={{
+                element: anchorRef,
+                position: 'bottom-right'
+              }}
+              headerIsHidden
+            >
+              <div className="card-popup_text">
+                <div className="card-popup_text_link" onClick={alertsStats?.endpoints?.link}>
+                  Endpoint: {alertsStats.endpoints?.counter}
+                </div>
+                <div className="card-popup_text_link" onClick={alertsStats?.job?.link}>
+                  Jobs: {alertsStats.job?.counter}
+                </div>
+                <div className="card-popup_text_link" onClick={alertsStats?.application?.link}>
+                  Application: {alertsStats.application?.counter}
+                </div>
+              </div>
+            </PopUpDialog>
+          )}
+        </div>
+      </div>
     </StatsCard>
   )
 }

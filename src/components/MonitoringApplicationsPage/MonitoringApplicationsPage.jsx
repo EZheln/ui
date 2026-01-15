@@ -17,28 +17,28 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import React, { useCallback, useMemo } from 'react'
-import { Outlet, useParams, useSearchParams } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 
 import ActionBar from '../ActionBar/ActionBar'
-import Loader from '../../common/Loader/Loader'
-import TableTop from '../../elements/TableTop/TableTop'
 import Breadcrumbs from '../../common/Breadcrumbs/Breadcrumbs'
 import MonitoringApplicationCounters from './MonitoringApplications/MonitoringApplicationCounters/MonitoringApplicationCounters'
+import TableTop from '../../elements/TableTop/TableTop'
 
-import { getFiltersConfig } from './MonitoringApplicationsPage.util'
-import { showErrorNotification } from '../../utils/notifications.util'
-import { useFiltersFromSearchParams } from '../../hooks/useFiltersFromSearchParams.hook'
 import {
+  fetchMEPWithDetections,
   fetchMonitoringApplication,
   fetchMonitoringApplications,
   fetchMonitoringApplicationsSummary
 } from '../../reducers/monitoringApplicationsReducer'
-import { fetchArtifacts } from '../../reducers/artifactsReducer'
-
+import { MODEL_ENDPOINTS_TAB, MONITORING_APP_PAGE } from '../../constants'
 import { PRIMARY_BUTTON } from 'igz-controls/constants'
-import { MONITORING_APP_PAGE } from '../../constants'
+import { fetchArtifacts } from '../../reducers/artifactsReducer'
+import { getFiltersConfig } from './MonitoringApplicationsPage.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
+import { useFiltersFromSearchParams } from '../../hooks/useFiltersFromSearchParams.hook'
+import { getSavedSearchParams } from 'igz-controls/utils/filter.util'
 
 import PresentMetricsIcon from 'igz-controls/images/present-metrics-icon.svg?react'
 
@@ -47,77 +47,108 @@ import './monitoringApplicationsPage.scss'
 const MonitoringApplicationsPage = () => {
   const dispatch = useDispatch()
   const params = useParams()
-  const monitoringApplicationsStore = useSelector(store => store.monitoringApplicationsStore)
+  const navigate = useNavigate()
   const filtersConfig = useMemo(() => getFiltersConfig(), [])
   const filters = useFiltersFromSearchParams(filtersConfig)
   const [, setSearchParams] = useSearchParams()
+  const contentRef = useRef(null)
 
   const refreshMonitoringApplications = useCallback(
-    filters => {
-      dispatch(fetchMonitoringApplicationsSummary({ project: params.projectName }))
-        .unwrap()
-        .catch(error => {
-          showErrorNotification(dispatch, error, '', 'Failed to fetch applications summary')
-        })
-      dispatch(fetchMonitoringApplications({ project: params.projectName, filters }))
-        .unwrap()
-        .catch(error => {
-          showErrorNotification(dispatch, error, '', 'Failed to fetch monitoring applications')
-        })
+    (filters, isFilterApplyAction) => {
+      if (!isFilterApplyAction) {
+        dispatch(fetchMonitoringApplicationsSummary({ project: params.projectName }))
+          .unwrap()
+          .catch(error => {
+            showErrorNotification(dispatch, error, '', 'Failed to fetch applications summary')
+          })
+        dispatch(fetchMonitoringApplications({ project: params.projectName, filters }))
+          .unwrap()
+          .catch(error => {
+            showErrorNotification(dispatch, error, '', 'Failed to fetch monitoring applications')
+          })
+        dispatch(
+          fetchMEPWithDetections({
+            project: params.projectName,
+            filters: filters
+          })
+        )
+          .unwrap()
+          .catch(error => {
+            showErrorNotification(
+              dispatch,
+              error,
+              '',
+              'Failed to fetch model endpoints with suspected/detected issue'
+            )
+          })
+      }
     },
     [dispatch, params.projectName]
   )
 
   const refreshMonitoringApplication = useCallback(
-    filters => {
-      dispatch(
-        fetchArtifacts({
-          project: params.projectName,
-          filters: {
-            ...filters,
-            labels: `mlrun/app-name=${params.name}`
-          }
-        })
-      )
-        .unwrap()
-        .catch(error => {
-          showErrorNotification(dispatch, error, '', 'Failed to fetch artifacts')
-        })
-      dispatch(
-        fetchMonitoringApplication({
-          project: params.projectName,
-          functionName: params.name,
-          filters
-        })
-      )
-        .unwrap()
-        .catch(error => {
-          showErrorNotification(dispatch, error, '', 'Failed to fetch monitoring application')
-        })
+    (filters, isFilterApplyAction) => {
+      if (!isFilterApplyAction) {
+        dispatch(
+          fetchArtifacts({
+            project: params.projectName,
+            filters: {
+              ...filters,
+              labels: `mlrun/app-name=${params.name}`
+            },
+            config: { params: { page: 1, 'page-size': 50, format: 'minimal' } } // limit to 50 artifacts the same as we have on Artifacts page per 1 FE page to avoid overload
+          })
+        )
+          .unwrap()
+          .catch(error => {
+            showErrorNotification(dispatch, error, '', 'Failed to fetch artifacts')
+          })
+
+        dispatch(
+          fetchMonitoringApplication({
+            project: params.projectName,
+            functionName: params.name,
+            filters
+          })
+        )
+          .unwrap()
+          .catch(error => {
+            showErrorNotification(dispatch, error, '', 'Failed to fetch monitoring application')
+            navigate(
+              `/projects/${params.projectName}/${MONITORING_APP_PAGE}${window.location.search}`,
+              { replace: true }
+            )
+          })
+      }
     },
-    [dispatch, params.name, params.projectName]
+    [dispatch, navigate, params.name, params.projectName]
   )
 
-  // TODO: uncomment in ML-10005
-  // useEffect(() => {
-  //   if (params.name) {
-  //     refreshMonitoringApplication(filters)
-  //   } else {
-  //     refreshMonitoringApplications(filters)
-  //   }
-  // }, [params.name, refreshMonitoringApplications, refreshMonitoringApplication, filters])
+  useEffect(() => {
+    if (params.name) {
+      refreshMonitoringApplication(filters)
+    } else {
+      refreshMonitoringApplications(filters)
+    }
+  }, [params.name, refreshMonitoringApplications, refreshMonitoringApplication, filters])
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo(0, 0)
+    }
+  }, [params.name])
 
   return (
     <div className="content-wrapper">
       <div className="content__header">
         <Breadcrumbs />
       </div>
-      <div className="content">
+      <div className="content monitoring-app-content" ref={contentRef}>
         <div className="content__action-bar-wrapper">
           <span className="monitoring-apps-title">
             {params.name && (
               <TableTop
-                link={`/projects/${params.projectName}/${MONITORING_APP_PAGE}/${window.location.search}`}
+                link={`/projects/${params.projectName}/${MONITORING_APP_PAGE}/${getSavedSearchParams(window.location.search)}`}
                 text={params.name}
               />
             )}
@@ -129,7 +160,11 @@ const MonitoringApplicationsPage = () => {
                 label: 'Application metrics',
                 className: 'action-button',
                 hidden: !params.name,
-                onClick: () => {},
+                onClick: () => {
+                  navigate(
+                    `/projects/${params.projectName}/${MONITORING_APP_PAGE}/${params.name}/${MODEL_ENDPOINTS_TAB}${window.location.search}`
+                  )
+                },
                 icon: <PresentMetricsIcon />
               }
             ]}
@@ -143,7 +178,6 @@ const MonitoringApplicationsPage = () => {
             withoutExpandButton
           />
           <MonitoringApplicationCounters />
-          {monitoringApplicationsStore.loading && <Loader />}
           <Outlet />
         </div>
       </div>

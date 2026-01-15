@@ -19,10 +19,11 @@ such restriction.
 */
 import React from 'react'
 import PropTypes from 'prop-types'
+import { isNil } from 'lodash'
 
-import Loader from '../../../../../common/Loader/Loader'
 import StatsCard from '../../../../../common/StatsCard/StatsCard'
-import { Tooltip, TextTooltipTemplate } from 'igz-controls/components'
+import { Tooltip, TextTooltipTemplate, Loader } from 'igz-controls/components'
+import { Link } from 'react-router-dom'
 
 const MonitoringApplicationCard = ({
   counterData,
@@ -47,11 +48,23 @@ const MonitoringApplicationCard = ({
                 hidden={!counter.tooltipText}
                 template={<TextTooltipTemplate text={counter.tooltipText} />}
               >
-                <div data-testid={`monitoring-app-${counter.id}`}>
-                  <div className="stats__counter">
-                    {loading ? <Loader section small secondary /> : error ? 'N/A' : counter.title}
-                  </div>
-                </div>
+                <StatsCard.MainCounter
+                  id={`monitoring-app-${counter.id}`}
+                  className={counter.counterClassName}
+                >
+                  {loading ? (
+                    <Loader section small secondary />
+                  ) : error || isNil(counter.title) ? (
+                    'N/A'
+                  ) : counter.link ? (
+                    <Link className="monitoring-stats__link" to={counter.link}>
+                      {counter.title}
+                    </Link>
+                  ) : (
+                    counter.title
+                  )}
+                  {counter.status && <i className={`state-${counter.status}`} />}
+                </StatsCard.MainCounter>
                 {counter.subtitle && (
                   <div data-testid={`${counter.id}_status`} className="stats__status">
                     <Tooltip
@@ -59,7 +72,9 @@ const MonitoringApplicationCard = ({
                       template={<TextTooltipTemplate text={counter.subtitle} />}
                     >
                       <span className="stats__subtitle">{counter.subtitle}</span>
-                      <i className={`state-${counter.status}`} />
+                      {counter.subtitleStatus && (
+                        <i className={`state-${counter.subtitleStatus}`} />
+                      )}
                     </Tooltip>
                   </div>
                 )}

@@ -17,12 +17,13 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
-import { capitalize } from 'lodash'
 import classnames from 'classnames'
+import moment from 'moment'
 
-import { formatDatetime, generateNuclioLink } from '../../../utils'
+import { generateNuclioLink } from '../../../utils'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
 
-export const generateOperatingFunctionsTable = functions => {
+export const generateOperatingFunctionsTable = (functions, projectName) => {
   const tableHeaders = [
     {
       value: 'Name',
@@ -30,7 +31,7 @@ export const generateOperatingFunctionsTable = functions => {
     },
     { value: 'Status', className: 'table-cell_small' },
     {
-      value: 'Started at',
+      value: 'Updated',
       className: 'table-cell_medium'
     },
     {
@@ -46,26 +47,28 @@ export const generateOperatingFunctionsTable = functions => {
   ]
 
   const tableBody = functions.map(func => {
+    const nuclioFunctionName = `${projectName}-${func.name.toLowerCase()}`.slice(0, 63)
+
     return {
       name: {
-        value: capitalize(func.name),
-        link: generateNuclioLink(`/projects/${func.nuclio_function_uri}`),
+        value: func.name,
+        href: generateNuclioLink(`/projects/${projectName}/functions/${nuclioFunctionName}`),
         className: 'table-cell_big'
       },
       status: {
         value: func.status,
         className: classnames('table-cell_small', 'status', `state-${func.status}`)
       },
-      startedAt: {
-        value: formatDatetime(func.started_at, 'N/A'),
+      updatedTime: {
+        value: formatDatetime(func.updated_time, 'N/A'),
         className: 'table-cell_medium'
       },
       lag: {
-        value: func.stats.lag,
+        value: func.stats.stream_stats.lag,
         className: 'table-cell_small'
       },
       commitedOffset: {
-        value: func.stats.committed_offset,
+        value: func.stats.stream_stats.committed,
         className: 'table-cell_small'
       }
     }
@@ -75,4 +78,106 @@ export const generateOperatingFunctionsTable = functions => {
     header: tableHeaders,
     body: tableBody
   }
+}
+
+export function groupDataToBins(data, startTime, endTime) {
+  const grouped = new Map()
+  const allowedDeviation = 1000
+  const DAY = 'day'
+  const HOUR = 'hour'
+  const MINUTES = 'minutes' // "minutes" represents 10 minutes
+  const timeDiffInHours =
+    (new Date(endTime) - new Date(startTime) - allowedDeviation) / (1000 * 60 * 60)
+  const basePeriod = timeDiffInHours > 72 ? DAY : timeDiffInHours > 6 ? HOUR : MINUTES
+
+  const roundDate = date => {
+    const dateToRound = new Date(date)
+
+    if (basePeriod === HOUR) {
+      dateToRound.setMinutes(0, 0, 0)
+    } else if (basePeriod === MINUTES) {
+      const mins = dateToRound.getMinutes()
+      const roundedMins = Math.floor(mins / 10) * 10
+      dateToRound.setMinutes(roundedMins, 0, 0)
+    } else {
+      dateToRound.setHours(0, 0, 0, 0)
+    }
+
+    return dateToRound
+  }
+
+  const incrementPeriod = period => {
+    if (basePeriod === HOUR) {
+      period.setHours(period.getHours() + 1)
+    } else if (basePeriod === MINUTES) {
+      period.setMinutes(period.getMinutes() + 10)
+    } else {
+      period.setDate(period.getDate() + 1)
+    }
+
+    return period
+  }
+  // generate bins
+  for (const period = roundDate(startTime); period.getTime() <= endTime; incrementPeriod(period)) {
+    grouped.set(period.toISOString(), 0)
+  }
+
+  data.forEach(([timestamp, value]) => {
+    const timestampDate = new Date(timestamp)
+
+    // ignore potential data beyond selected time range
+    if (timestampDate >= startTime && timestampDate <= endTime) {
+      const date = roundDate(timestamp)
+      const dateKey = date.toISOString()
+
+      grouped.set(dateKey, grouped.get(dateKey) + value)
+    }
+  })
+
+  const getLabel = (from, to) => {
+    const toDateObject = moment(to || from)
+    const shortFormatOptions =
+      basePeriod === MINUTES
+        ? { hour: '2-digit', minute: '2-digit' }
+        : basePeriod === HOUR
+          ? { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+          : { month: '2-digit', day: '2-digit', year: '2-digit' }
+
+    if (!to) {
+      toDateObject.add(basePeriod === MINUTES ? 10 : 1, basePeriod)
+    }
+
+    return {
+      label: `${formatDatetime(from, 'N/A', shortFormatOptions)}`,
+      fullDate: `${formatDatetime(from, 'N/A')} - ${formatDatetime(toDateObject.toDate(), 'N/A')}`
+    }
+  }
+
+  const groupedData = Array.from(grouped.entries())
+  const dataset = groupedData.reduce(
+    (dataset, [date, value], index) => {
+      if (index === 0) {
+        // cut the first bin if it is not full
+        if (startTime > new Date(date)) return dataset
+      }
+
+      const labelData = getLabel(date)
+
+      dataset.values.push(value)
+      dataset.labels.push(labelData.label)
+      dataset.dates.push(labelData.fullDate)
+
+      return dataset
+    },
+    { values: [], labels: [], dates: [] }
+  )
+
+  // cut the last bin if it is not full
+  if (dataset.values.length && endTime > new Date(groupedData[groupedData.length - 1][0])) {
+    dataset.values.pop()
+    dataset.labels.pop()
+    dataset.dates.pop()
+  }
+
+  return dataset
 }

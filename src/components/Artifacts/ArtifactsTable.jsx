@@ -22,7 +22,6 @@ import PropTypes from 'prop-types'
 import { isEmpty } from 'lodash'
 
 import NoData from '../../common/NoData/NoData'
-import Loader from '../../common/Loader/Loader'
 import Table from '../Table/Table'
 import ArtifactsFilters from '../ArtifactsActionBar/ArtifactsFilters'
 import ActionBar from '../ActionBar/ActionBar'
@@ -30,11 +29,13 @@ import HistoryBackLink from '../../common/HistoryBackLink/historyBackLink'
 import Details from '../Details/Details'
 import ArtifactsTableRow from '../../elements/ArtifactsTableRow/ArtifactsTableRow'
 import Pagination from '../../common/Pagination/Pagination'
+import { Loader } from 'igz-controls/components'
 
-import { getNoDataMessage } from '../../utils/getNoDataMessage'
-import { ALL_VERSIONS_PATH, FULL_VIEW_MODE } from '../../constants'
+import { ALL_VERSIONS_PATH } from '../../constants'
+import { FULL_VIEW_MODE } from 'igz-controls/constants'
 import { getCloseDetailsLink } from '../../utils/link-helper.util'
 import { getDefaultFirstHeader } from '../../utils/createArtifactsContent'
+import { getNoDataMessage } from '../../utils/getNoDataMessage'
 
 let ArtifactsTable = ({
   actionButtons,
@@ -67,10 +68,22 @@ let ArtifactsTable = ({
   tableHeaders,
   viewMode
 }) => {
+  const renderHistoryBackLink = () => {
+    if (!isAllVersions) return null
+
+    return isOnlyTabScreen ? (
+      <div className="content__history-back-link-wrapper">
+        <HistoryBackLink itemName={artifactName} link={historyBackLink} />
+      </div>
+    ) : (
+      <HistoryBackLink itemName={artifactName} link={historyBackLink} />
+    )
+  }
+
   return (
     <div className="table-container">
       <div className="content__action-bar-wrapper">
-        {renderPageTabs && renderPageTabs()}
+        {renderPageTabs ? renderPageTabs() : renderHistoryBackLink()}
         <ActionBar
           actionButtons={actionButtons}
           closeParamName={isAllVersions ? ALL_VERSIONS_PATH : tab || page}
@@ -78,21 +91,19 @@ let ArtifactsTable = ({
           filtersConfig={filtersConfig}
           handleRefresh={handleRefreshArtifacts}
           setSearchParams={setSearchArtifactsParams}
+          selectedItemName={artifactName}
           tab={tab}
           withRefreshButton
           withoutExpandButton
         >
-          <ArtifactsFilters artifacts={artifacts} isAllVersions={isAllVersions} />
+          <ArtifactsFilters
+            artifacts={artifacts}
+            filtersConfig={filtersConfig}
+            isAllVersions={isAllVersions}
+          />
         </ActionBar>
       </div>
-      {isAllVersions &&
-        (isOnlyTabScreen ? (
-          <div className="content__history-back-link-wrapper">
-            <HistoryBackLink itemName={artifactName} link={historyBackLink} />
-          </div>
-        ) : (
-          <HistoryBackLink itemName={artifactName} link={historyBackLink} />
-        ))}
+      {renderPageTabs && renderHistoryBackLink()}
       {artifactsStore.loading ? null : tableContent.length === 0 && isEmpty(selectedArtifact) ? (
         <NoData
           message={getNoDataMessage(
@@ -113,7 +124,11 @@ let ArtifactsTable = ({
             applyDetailsChangesCallback={applyDetailsChangesCallback}
             detailsFormInitialValues={detailsFormInitialValues}
             getCloseDetailsLink={() =>
-              getCloseDetailsLink(isAllVersions ? ALL_VERSIONS_PATH : tab || page)
+              getCloseDetailsLink(
+                isAllVersions ? ALL_VERSIONS_PATH : tab || page,
+                false,
+                artifactName
+              )
             }
             handleCancel={() => setSelectedArtifact({})}
             pageData={pageData}
@@ -138,6 +153,7 @@ let ArtifactsTable = ({
           <Pagination
             paginationConfig={paginationConfigArtifactsRef.current}
             closeParamName={isAllVersions ? ALL_VERSIONS_PATH : tab || page}
+            selectedItemName={artifactName}
           />
         </>
       )}

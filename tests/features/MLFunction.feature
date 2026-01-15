@@ -109,7 +109,7 @@ Feature: ML Functions
         Then verify "Date_Picker_Filter_Dropdown" dropdown element on "ML_Functions" wizard should contains "Dropdown_Options"."Date_Picker_Filter_Options"
         When select "Any time" option in "Date_Picker_Filter_Dropdown" filter dropdown on "ML_Functions" wizard
         And wait load page
-        When click on cell with row index 2 in "name" column in "Functions_Table" table on "ML_Functions" wizard
+        When click on cell with row index 3 in "name" column in "Functions_Table" table on "ML_Functions" wizard
         And wait load page
         Then verify "Header" element visibility on "ML_Function_Info_Pane" wizard
         Then verify "Updated" element visibility on "ML_Function_Info_Pane" wizard
@@ -119,7 +119,7 @@ Feature: ML Functions
         Then verify "Overview" tab is active in "Info_Pane_Tab_Selector" on "ML_Function_Info_Pane" wizard
         Then verify "Overview_Headers" on "ML_Function_Info_Pane" wizard should contains "ML_Function_Info_Pane"."Overview_Headers"
         Then click on "Cross_Close_Button" element on "ML_Function_Info_Pane" wizard
-        When click on cell with row index 1 in "name" column in "Functions_Table" table on "ML_Functions" wizard
+        When click on cell with row index 2 in "name" column in "Functions_Table" table on "ML_Functions" wizard
         And wait load page
         Then verify "Header" element visibility on "ML_Function_Info_Pane" wizard
         Then verify "Updated" element visibility on "ML_Function_Info_Pane" wizard
@@ -200,7 +200,7 @@ Feature: ML Functions
         And hover "MLRun_Logo" component on "commonPagesHeader" wizard
         And wait load page
         Then click on "New_Function_Button" element on "ML_Functions" wizard
-        Then "Title" element on "Create_ML_Function_Popup" should contains "Create New Function" value
+        Then "Title" element on "Create_ML_Function_Popup" should contains "Create new function" value
         And verify "Cross_Cancel_Button" element visibility on "Create_ML_Function_Popup" wizard
         Then verify "New_Function_Name_Input" element visibility on "Create_ML_Function_Popup" wizard
         Then type value "   " to "New_Function_Name_Input" field on "Create_ML_Function_Popup" wizard
@@ -221,7 +221,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF010 - Check all mandatory components in General Accordion on create New Function page
+    Scenario: MLF010 - Check all mandatory components in General Accordion on create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -267,7 +267,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF011 - Check all mandatory components in Code Accordion on create New Function page
+    Scenario: MLF011 - Check all mandatory components in Code Accordion on create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -313,7 +313,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF012 - Check all mandatory components in Resources Accordion on create New Function page
+    Scenario: MLF012 - Check all mandatory components in Resources Accordion on create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -404,7 +404,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF013 - Verify behaviour of Volume Paths Table in Resources Accordion on create New Function page
+    Scenario: MLF013 - Verify behaviour of Volume Paths Table in Resources Accordion on create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -438,7 +438,7 @@ Feature: ML Functions
         When click on "Delete_New_Row_Button" element in "Resources_Accordion" on "New_Function" wizard
         When add new volume rows to "Volume_Paths_Table" table in "Resources_Accordion" on "New_Function" wizard using nontable inputs
             | Volume_Paths_Table_Type_Dropdown | Volume_Paths_Table_Volume_Name_Input | Volume_Paths_Table_Path_Input | Volume_Paths_Table_Config_Map_Input | Add_New_Row_Button |
-            |           Config Map             |                                      |                               |                                     |         yes        |
+            |           Config map             |                                      |                               |                                     |         yes        |
         Then verify "Volume_Paths_Table_Volume_Name_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Config_Map_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
@@ -449,7 +449,7 @@ Feature: ML Functions
             |             Secret               |                                      |                               |                                      |         yes        |
         Then verify "Volume_Paths_Table_Volume_Name_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
-        Then verify "Volume_Paths_Table_Config_Map_Input" element in "Resources_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
+        Then verify "Volume_Paths_Table_Secret_Name_Input" in "Resources_Accordion" on "New_Function" wizard should display options "Input_Hint"."Secret_Name_Rule_Options"
         Then verify "Volume_Paths_Table_Path_Input" element in "Resources_Accordion" on "New_Function" wizard should display hint "Input_Hint"."Mount_Path_Hint"
         When click on "Delete_New_Row_Button" element in "Resources_Accordion" on "New_Function" wizard
         When add new volume rows to "Volume_Paths_Table" table in "Resources_Accordion" on "New_Function" wizard using nontable inputs
@@ -510,7 +510,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF014 - Check all mandatory components in Resources Accordion on create New Function page
+    Scenario: MLF014 - Check all mandatory components in Resources Accordion on create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -537,7 +537,7 @@ Feature: ML Functions
             | Function_Environment_Variables_Name_Input | Function_Environment_Variables_Type_Dropdown | Function_Environment_Variables_Secret_Name_Input | Function_Environment_Variables_Secret_Key_Input | Add_Row_Button |
             |                                           |                    Secret                    |                                                 |                        @#$                     |       yes      |
         Then verify "Function_Environment_Variables_Name_Input" element in "Environment_Variables_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
-        Then verify "Function_Environment_Variables_Secret_Name_Input" element in "Environment_Variables_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Require"
+        Then verify "Function_Environment_Variables_Secret_Name_Input" in "Environment_Variables_Accordion" on "New_Function" wizard should display options "Input_Hint"."Secret_Name_Rule_Options"
         Then verify "Function_Environment_Variables_Secret_Name_Input" element in "Environment_Variables_Accordion" on "New_Function" wizard should display hint "Input_Hint"."SECRET_INPUT_HINT"
         Then verify "Function_Environment_Variables_Secret_Key_Input" element in "Environment_Variables_Accordion" on "New_Function" wizard should display hover warning "Input_Hint"."Input_Field_Invalid"
         Then verify "Function_Environment_Variables_Secret_Key_Input" element in "Environment_Variables_Accordion" on "New_Function" wizard should display hint "Input_Hint"."VALUE_INPUT_HINT"
@@ -1001,7 +1001,7 @@ Feature: ML Functions
     @passive
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF022 - Verify non-unique value input hint on Create New Function page
+    Scenario: MLF022 - Verify non-unique value input hint on Create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -1110,9 +1110,9 @@ Feature: ML Functions
         Then verify "Cross_Cancel_Button" element visibility on "View_YAML" wizard
         Then verify "YAML_Modal_Container" element visibility on "View_YAML" wizard
         Then click on "Cross_Cancel_Button" element on "View_YAML" wizard
-        Then click on cell with row index 8 in "expand_btn" column in "Functions_Table" table on "ML_Functions" wizard
+        Then click on cell with row index 9 in "expand_btn" column in "Functions_Table" table on "ML_Functions" wizard
         And wait load page
-        Then select "View YAML" option in action menu on "ML_Functions" wizard in "Functions_Table" table at row with "Nov 23, 2021, 11:31:51 AM" value in "name" column
+        Then select "View YAML" option in action menu on "ML_Functions" wizard in "Functions_Table" table at row with "Nov 23, 2021, 10:31:51 AM" value in "name" column
         Then verify if "View_YAML" popup dialog appears
         Then verify "Cross_Cancel_Button" element visibility on "View_YAML" wizard
         Then verify "YAML_Modal_Container" element visibility on "View_YAML" wizard
@@ -1369,14 +1369,14 @@ Feature: ML Functions
         And wait load page
         When click on cell with row index 2 in "name" column in "Functions_Table" table on "ML_Functions" wizard
         And wait load page
-        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/INVALID" to "projects/default/functions/model-monitoring-stream/latest/overview"
+        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/INVALID?dates=anyTime" to "projects/default/functions/model-monitoring-stream/latest/overview?dates=anyTime"
         Then select "Code" tab in "Info_Pane_Tab_Selector" on "ML_Function_Info_Pane" wizard
         And wait load page
-        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/INVALID" to "projects/default/functions/model-monitoring-stream/latest/overview"
+        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/CodeINVALID?dates=anyTime" to "projects/default/functions/model-monitoring-stream/latest/overview?dates=anyTime"
         Then select "Build Log" tab in "Info_Pane_Tab_Selector" on "ML_Function_Info_Pane" wizard
         And wait load page
-        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/INVALID" to "projects/default/functions/model-monitoring-stream/latest/overview"
-        Then verify redirection from "projects/default/INVALID/model-monitoring-stream/latest/overview" to "projects"
+        Then verify redirection from "projects/default/functions/model-monitoring-stream/latest/BuildLogINVALID?dates=anyTime" to "projects/default/functions/model-monitoring-stream/latest/overview?dates=anyTime"
+        Then verify redirection from "projects/default/INVALID/model-monitoring-stream/latest/overview?dates=anyTime" to "projects"
 
     @MLF
     @smoke
@@ -1413,7 +1413,7 @@ Feature: ML Functions
     @MLF
     @smoke
     #TODO: ML-5137 - move create/edit 'function panel' to UI Demo mode
-    Scenario: MLF002 - Check requirements field in Code Accordion on Create New Function page
+    Scenario: MLF002 - Check requirements field in Code Accordion on Create new function page
         Given open url
         And wait load page
         And click on row root with value "default" in "name" column in "Projects_Table" table on "Projects" wizard
@@ -1445,6 +1445,8 @@ Feature: ML Functions
         Then verify "New_Function_Build_Commands_Text_Area" not input element in "Code_Accordion" on "New_Function" wizard is enabled
         Then click on "Save_Button" element on "New_Function" wizard
         And wait load page
+        When turn on staging mode with query params "true"
+        And wait load page
         Then check "demo-function-02" value in "name" column in "Functions_Table" table on "ML_Functions" wizard
         Then verify "Table_FilterBy_Button" element visibility on "ML_Functions" wizard
         Then click on "Table_FilterBy_Button" element on "ML_Functions" wizard
@@ -1456,6 +1458,7 @@ Feature: ML Functions
         And wait load page
         Then check "demo-function-02" value in "name" column in "Functions_Table" table on "ML_Functions" wizard
         When click on cell with value "demo-function-02" in "name" column in "Functions_Table" table on "ML_Functions" wizard
+        And wait load page
         Then check "demo-function-02" value in "name" column in "Overview_Table" table on "ML_Function_Info_Pane" wizard
         Then "Header" element on "ML_Function_Info_Pane" should contains "demo-function-02" value
 

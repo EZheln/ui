@@ -17,25 +17,55 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
+import { ERROR_STATE, FUNCTION_READY_STATE, UNHEALTHY_STATE } from '../constants'
+
 const OPERATING_FUNCTIONS_NAMES_LIST = [
-    'model-monitoring-controller',
-    'model-monitoring-stream',
-    'model-monitoring-writer'
+  'model-monitoring-controller',
+  'model-monitoring-stream',
+  'model-monitoring-writer'
+]
+const NUCLIO_FUNCTIONS_MLRUN_TYPES = [
+  'mlrun__model-monitoring-application',
+  'mlrun__model-monitoring-infra'
 ]
 
 export const splitApplicationsContent = (functions = []) => {
-    const monitoringApplicationsData = {
-        operatingFunctions: [],
-        applications: []
+  const monitoringApplicationsData = {
+    operatingFunctions: [],
+    applications: []
+  }
+
+  functions.forEach(func => {
+    const funcName = func.name
+      ? func.name
+      : func.metadata.name.replace(`${func.metadata.labels['nuclio.io/project-name']}-`, '')
+
+    if (OPERATING_FUNCTIONS_NAMES_LIST.includes(funcName)) {
+      monitoringApplicationsData.operatingFunctions.push(func)
+    } else {
+      monitoringApplicationsData.applications.push(func)
     }
+  })
 
-    functions.forEach(func => {
-        if (OPERATING_FUNCTIONS_NAMES_LIST.includes(func.name)) {
-            monitoringApplicationsData.operatingFunctions.push(func)
-        } else {
-            monitoringApplicationsData.applications.push(func)
-        }
-    })
+  return monitoringApplicationsData
+}
 
-    return monitoringApplicationsData
+export const aggregateApplicationStatuses = monitoringApplications => {
+  return monitoringApplications.reduce(
+    (acc, application) => {
+      const status = application.status.state ? application.status.state : application.status
+
+      return {
+        ready: acc.ready + (status === FUNCTION_READY_STATE ? 1 : 0),
+        error: acc.error + ([ERROR_STATE, UNHEALTHY_STATE].includes(status) ? 1 : 0)
+      }
+    },
+    { ready: 0, error: 0 }
+  )
+}
+
+export const filterNuclioAppFunctions = (nuclioFunctions = []) => {
+  return nuclioFunctions.filter(nuclioFunc => {
+    return NUCLIO_FUNCTIONS_MLRUN_TYPES.includes(nuclioFunc.metadata.labels['mlrun__type'])
+  })
 }

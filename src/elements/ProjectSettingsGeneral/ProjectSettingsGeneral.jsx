@@ -33,10 +33,10 @@ import {
   FormInput,
   FormOnChange,
   FormTextarea,
-  Tip
+  Tip,
+  Loader
 } from 'igz-controls/components'
 import ChangeOwnerPopUp from '../ChangeOwnerPopUp/ChangeOwnerPopUp'
-import Loader from '../../common/Loader/Loader'
 
 import projectsApi from '../../api/projects-api'
 import {
@@ -55,18 +55,19 @@ import {
   areFormValuesChanged,
   generateObjectFromKeyValue,
   parseObjectToKeyValue,
-  setFieldState
+  setFieldState,
+  clearArrayFromEmptyObjectElements
 } from 'igz-controls/utils/form.util'
 import { FORBIDDEN_ERROR_STATUS_CODE } from 'igz-controls/constants'
-import { getChipOptions } from '../../utils/getChipOptions'
+import { getChipOptions } from 'igz-controls/utils/chips.util'
 import { getErrorMsg } from 'igz-controls/utils/common.util'
 import {
   getValidationRules,
   getInternalLabelsValidationRule
 } from 'igz-controls/utils/validation.util'
 import { parseChipsData, convertChipsData } from '../../utils/convertChipsData'
-import { setNotification } from '../../reducers/notificationReducer'
-import { showErrorNotification } from '../../utils/notifications.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { areNodeSelectorsSupported } from './projectSettingsGeneral.utils'
 import { fetchProject, removeProjectData } from '../../reducers/projectReducer'
 
@@ -214,7 +215,9 @@ const ProjectSettingsGeneral = ({
             [DEFAULT_IMAGE]: formStateLocal.values[DEFAULT_IMAGE] ?? '',
             [DESCRIPTION]: formStateLocal.values[DESCRIPTION] ?? '',
             [GOALS]: formStateLocal.values[GOALS] ?? '',
-            [PARAMS]: generateObjectFromKeyValue(formStateLocal.values[PARAMS])
+            [PARAMS]: generateObjectFromKeyValue(
+              clearArrayFromEmptyObjectElements(formStateLocal.values[PARAMS])
+            )
           },
           metadata: {
             ...newProjectData.metadata,
@@ -224,7 +227,7 @@ const ProjectSettingsGeneral = ({
 
         if (areNodeSelectorsSupported) {
           newProjectData.spec[NODE_SELECTORS] = generateObjectFromKeyValue(
-            formStateLocal.values[NODE_SELECTORS]
+            clearArrayFromEmptyObjectElements(formStateLocal.values[NODE_SELECTORS])
           )
         }
 
@@ -351,7 +354,7 @@ const ProjectSettingsGeneral = ({
                       {areNodeSelectorsSupported && (
                         <div>
                           <div className="settings__card-title">
-                            <span>Node Selectors</span>
+                            <span>Node selectors</span>
                             <Tip
                               text="Ensure that the node selectors you are configuring are compatible with the available nodes in your cluster. Incompatible node selectors will not be validated at the project level and might result in scheduling issues when running functions.
                           If there is a conflict with the function node selector you defined or if the pod cannot be scheduled for some reason, check the project/platform configuration Key:Value combinations to see if there is a node selection causing the issue. If, after consulting with the project/general admin, you want to delete a global setting, enter the Key here, but leave the Value empty."

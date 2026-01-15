@@ -22,10 +22,10 @@ import PropTypes from 'prop-types'
 import { useDispatch, useSelector } from 'react-redux'
 import { isEmpty } from 'lodash'
 
-import ApplicationMetricCard from '../DetailsMetrics/MetricsCards/ApplicationMetricCard'
+import ApplicationMetricCard from '../DetailsMetrics/MetricsCards/ApplicationMetricCard/ApplicationMetricCard'
 import DatePicker from '../../common/DatePicker/DatePicker'
 import NoData from '../../common/NoData/NoData'
-import NoMetricData from '../DetailsMetrics/MetricsCards/NoMetricData'
+import NoMetricData from '../DetailsMetrics/MetricsCards/NoMetricData/NoMetricData'
 import StatsCard from '../../common/StatsCard/StatsCard'
 
 import { REQUEST_CANCELED } from '../../constants'
@@ -112,10 +112,10 @@ const DetailsAlertsMetrics = ({ selectedItem, filters, isAlertsPage = true }) =>
 
     if (!isAlertsPage) {
       if (filters?.dates?.initialSelectedOptionId === CUSTOM_RANGE_DATE_OPTION) {
-        params.start = filters?.dates.value[0].getTime()
-        params.end = filters?.dates.value[1].getTime()
+        params.start = filters?.dates?.value[0]?.getTime?.()
+        params.end = filters?.dates?.value[1]?.getTime?.()
       } else {
-        params.start = filters?.dates.value[0].getTime()
+        params.start = filters?.dates?.value[0]?.getTime?.()
         params.end = Date.now()
       }
     }
@@ -139,22 +139,6 @@ const DetailsAlertsMetrics = ({ selectedItem, filters, isAlertsPage = true }) =>
 
   return (
     <div className="metrics-wrapper">
-      {isAlertsPage && detailsStore.loadingCounter === 0 && (
-        <div className="metrics-wrapper__custom-filters">
-          <DatePicker
-            className="details-date-picker"
-            date={detailsStore.dates.value[0]}
-            dateTo={detailsStore.dates.value[1]}
-            selectedOptionId={detailsStore.dates.selectedOptionId}
-            label=""
-            onChange={handleChangeDates}
-            type="date-range-time"
-            timeFrameLimit={TIME_FRAME_LIMITS.MONTH}
-            withLabels
-          />
-        </div>
-      )}
-
       {generatedMetrics.length === 0 ? (
         !detailsStore.loadingCounter ? (
           requestErrorMessage ? (
@@ -167,10 +151,25 @@ const DetailsAlertsMetrics = ({ selectedItem, filters, isAlertsPage = true }) =>
           )
         ) : null
       ) : (
-        <div ref={metricsContainerRef} className="metrics alerts-table__metrics">
+        <div ref={metricsContainerRef} className="metrics alerts-table">
           {generatedMetrics.map(([applicationName, applicationMetrics]) => (
             <React.Fragment key={applicationName}>
-              {isAlertsPage && <div className="metrics__card-header">{applicationName}</div>}
+              {isAlertsPage && detailsStore.loadingCounter === 0 && (
+                <div className="alerts-table__metrics-header">
+                  {applicationName}
+                  <DatePicker
+                    className="details-date-picker"
+                    date={detailsStore.dates.value[0]}
+                    dateTo={detailsStore.dates.value[1]}
+                    selectedOptionId={detailsStore.dates.selectedOptionId}
+                    label=""
+                    onChange={handleChangeDates}
+                    type="date-range-time"
+                    timeFrameLimit={TIME_FRAME_LIMITS.MONTH}
+                    withLabels
+                  />
+                </div>
+              )}
               {applicationMetrics.map(metric =>
                 !metric.data || isEmpty(metric.points) ? (
                   <NoMetricData key={metric.id} title={metric.title} />

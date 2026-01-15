@@ -18,11 +18,12 @@ under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
 import prettyBytes from 'pretty-bytes'
-import { capitalize, isNumber } from 'lodash'
+import { isNumber } from 'lodash'
 
-import { parseChipsData } from '../../../../utils/convertChipsData'
-import { formatDatetime } from '../../../../utils'
 import { METRIC_TYPE, RESULT_TYPE } from '../../../../constants'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
+import { getDriftStatusData } from '../../../../utils/createArtifactsContent'
+import { parseChipsData } from '../../../../utils/convertChipsData'
 
 export const generateArtifactsTableContent = (artifacts = []) => {
   const tableHeaders = [
@@ -30,8 +31,8 @@ export const generateArtifactsTableContent = (artifacts = []) => {
       value: 'Name',
       className: 'table-cell_big'
     },
-    { value: 'Type', className: 'table-cell_medium' },
-    { value: 'Labels', className: 'table-cell_medium' },
+    { value: 'Type', className: 'table-cell_small' },
+    { value: 'Labels', className: 'table-cell_big' },
     { value: 'Producer', className: 'table-cell_small' },
     { value: 'Owner', className: 'table-cell_small' },
     { value: 'Updated', className: 'table-cell_medium' },
@@ -41,16 +42,17 @@ export const generateArtifactsTableContent = (artifacts = []) => {
   const tableBody = artifacts.map(artifact => {
     return {
       name: {
-        value: capitalize(artifact.db_key),
-        className: 'table-cell_big'
+        value: artifact.db_key,
+        tag: artifact.tag,
+        className: 'table-cell_big table-cell_with-tag'
       },
       artifactType: {
         value: artifact.kind || 'artifact',
-        className: 'table-cell_medium'
+        className: 'table-cell_small'
       },
       labels: {
         value: parseChipsData(artifact.labels),
-        className: 'table-cell_medium'
+        className: 'table-cell_big'
       },
       producer: {
         value: artifact.producer.name,
@@ -78,23 +80,16 @@ export const generateArtifactsTableContent = (artifacts = []) => {
 }
 
 export const generateResultsTableContent = (metrics = []) => {
-  const tableHeaders = [
-    {
-      value: 'Name',
-      className: 'table-cell_medium'
-    },
-    { value: 'Kind', className: 'table-cell_medium' },
-    { value: 'Value (latest result)', className: 'table-cell_medium' },
-    { value: 'Time (latest result)', className: 'table-cell_medium' },
-    { value: 'Status', className: 'table-cell_small' }
-  ]
-
+  let timeColumnIsHidden = false
   const tableBody = metrics
     .filter(metric => metric.type === RESULT_TYPE)
     .map(result => {
+      const driftStatusData = getDriftStatusData(result.status)
+      timeColumnIsHidden = !result.time
+
       return {
         name: {
-          value: capitalize(result.name),
+          value: result.result_name,
           className: 'table-cell_medium'
         },
         kind: {
@@ -106,15 +101,27 @@ export const generateResultsTableContent = (metrics = []) => {
           className: 'table-cell_medium'
         },
         time: {
-          value: result.time,
+          hidden: timeColumnIsHidden,
+          value: formatDatetime(result.time, 'N/A'),
           className: 'table-cell_medium'
         },
         status: {
-          value: result.status,
-          className: 'table-cell_small'
+          value: driftStatusData.value,
+          className: 'table-cell_small',
+          tooltip: driftStatusData.tooltip
         }
       }
     })
+  const tableHeaders = [
+    {
+      value: 'Name',
+      className: 'table-cell_medium'
+    },
+    { value: 'Kind', className: 'table-cell_medium' },
+    { value: 'Value (latest)', className: 'table-cell_medium' },
+    { value: 'Time (latest result)', className: 'table-cell_medium', hidden: timeColumnIsHidden },
+    { value: 'Status', className: 'table-cell_small' }
+  ]
 
   return {
     header: tableHeaders,
@@ -123,21 +130,15 @@ export const generateResultsTableContent = (metrics = []) => {
 }
 
 export const generateMetricsTableContent = (metrics = []) => {
-  const tableHeaders = [
-    {
-      value: 'Name',
-      className: 'table-cell_medium'
-    },
-    { value: 'Value (latest result)', className: 'table-cell_medium' },
-    { value: 'Time (latest result)', className: 'table-cell_medium' }
-  ]
-
+  let timeColumnIsHidden = false
   const tableBody = metrics
     .filter(metric => metric.type === METRIC_TYPE)
     .map(metric => {
+      timeColumnIsHidden = !metric.time
+
       return {
         name: {
-          value: capitalize(metric.name),
+          value: metric.metric_name,
           className: 'table-cell_medium'
         },
         value: {
@@ -145,11 +146,20 @@ export const generateMetricsTableContent = (metrics = []) => {
           className: 'table-cell_medium'
         },
         time: {
+          hidden: timeColumnIsHidden,
           value: formatDatetime(metric.time, 'N/A'),
           className: 'table-cell_medium'
         }
       }
     })
+  const tableHeaders = [
+    {
+      value: 'Name',
+      className: 'table-cell_medium'
+    },
+    { value: 'Value (latest)', className: 'table-cell_medium' },
+    { value: 'Time (latest metric)', className: 'table-cell_medium', hidden: timeColumnIsHidden }
+  ]
 
   return {
     header: tableHeaders,

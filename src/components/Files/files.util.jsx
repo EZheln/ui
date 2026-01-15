@@ -25,17 +25,24 @@ import {
   ARTIFACT_MAX_DOWNLOAD_SIZE,
   ARTIFACT_OTHER_TYPE,
   ARTIFACT_TYPE,
-  FILES_PAGE,
-  FULL_VIEW_MODE
+  FILES_PAGE
 } from '../../constants'
-import { applyTagChanges, chooseOrFetchArtifact } from '../../utils/artifacts.util'
-import { copyToClipboard } from '../../utils/copyToClipboard'
-import { getIsTargetPathValid } from '../../utils/createArtifactsContent'
-import { showArtifactsPreview } from '../../reducers/artifactsReducer'
+import { FULL_VIEW_MODE } from 'igz-controls/constants'
+import {
+  processActionAfterTagUniquesValidation,
+  applyTagChanges,
+  chooseOrFetchArtifact
+} from '../../utils/artifacts.util'
 import { generateUri } from '../../utils/resources'
+import { getIsTargetPathValid } from '../../utils/createArtifactsContent'
 import { handleDeleteArtifact } from '../../utils/handleDeleteArtifact'
-import { openDeleteConfirmPopUp, openPopUp } from 'igz-controls/utils/common.util'
+import { openDeleteConfirmPopUp, openPopUp, copyToClipboard } from 'igz-controls/utils/common.util'
 import { setDownloadItem, setShowDownloadsList } from '../../reducers/downloadReducer'
+import { showArtifactsPreview } from '../../reducers/artifactsReducer'
+import {
+  decreaseDetailsLoadingCounter,
+  increaseDetailsLoadingCounter
+} from '../../reducers/detailsReducer'
 
 import TagIcon from 'igz-controls/images/tag-icon.svg?react'
 import YamlIcon from 'igz-controls/images/yaml.svg?react'
@@ -72,14 +79,14 @@ export const infoHeaders = [
   { label: 'Labels', id: 'labels' }
 ]
 
-export const generatePageData = viewMode => {
+export const generatePageData = (viewMode, isDetailsPopUp = false) => {
   return {
     page: FILES_PAGE,
     details: {
       type: FILES_PAGE,
       menu: detailsMenu,
       infoHeaders,
-      hideBackBtn: viewMode === FULL_VIEW_MODE,
+      hideBackBtn: viewMode === FULL_VIEW_MODE && !isDetailsPopUp,
       withToggleViewBtn: true
     }
   }
@@ -94,7 +101,17 @@ export const handleApplyDetailsChanges = (
   setNotification,
   dispatch
 ) => {
-  return applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification)
+  return processActionAfterTagUniquesValidation({
+    tag: changes?.data?.tag?.currentFieldValue,
+    artifact: selectedItem,
+    projectName,
+    dispatch,
+    actionCallback: () =>
+      applyTagChanges(changes, selectedItem, projectName, dispatch, setNotification),
+    throwError: true,
+    showLoader: () => dispatch(increaseDetailsLoadingCounter()),
+    hideLoader: () => dispatch(decreaseDetailsLoadingCounter())
+  })
 }
 
 export const generateActionsMenu = (

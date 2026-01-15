@@ -27,11 +27,10 @@ import FunctionsFilters from './FunctionsFilters'
 import FunctionsPanel from '../FunctionsPanel/FunctionsPanel'
 import FunctionsTableRow from '../../elements/FunctionsTableRow/FunctionsTableRow'
 import HistoryBackLink from '../../common/HistoryBackLink/historyBackLink'
-import Loader from '../../common/Loader/Loader'
 import NoData from '../../common/NoData/NoData'
 import Pagination from '../../common/Pagination/Pagination'
 import Table from '../Table/Table'
-import { ConfirmDialog } from 'igz-controls/components'
+import { ConfirmDialog, Loader } from 'igz-controls/components'
 
 import {
   FUNCTIONS_PAGE,
@@ -44,7 +43,7 @@ import { FILTERS_CONFIG } from '../../types'
 import { PRIMARY_BUTTON } from 'igz-controls/constants'
 import { getCloseDetailsLink } from '../../utils/link-helper.util'
 import { getNoDataMessage } from '../../utils/getNoDataMessage'
-import { getSavedSearchParams } from '../../utils/filter.util'
+import { getSavedSearchParams } from 'igz-controls/utils/filter.util'
 import { isEmpty } from 'lodash'
 
 const FunctionsView = ({
@@ -52,6 +51,7 @@ const FunctionsView = ({
   closePanel,
   confirmData = null,
   createFunctionSuccess,
+  detailsFormInitialValues,
   editableItem = null,
   filters,
   filtersStore,
@@ -106,6 +106,7 @@ const FunctionsView = ({
                 filtersConfig={functionsFiltersConfig}
                 handleRefresh={handleRefreshFunctions}
                 setSearchParams={setSearchFunctionsParams}
+                selectedItemName={params.funcName}
                 withoutExpandButton
               >
                 <FunctionsFilters />
@@ -129,8 +130,13 @@ const FunctionsView = ({
                 {functionsStore.funcLoading && <Loader />}
                 <Table
                   actionsMenu={actionsMenu}
+                  detailsFormInitialValues={detailsFormInitialValues}
                   getCloseDetailsLink={() =>
-                    getCloseDetailsLink(isAllVersions ? ALL_VERSIONS_PATH : FUNCTIONS_PAGE_PATH)
+                    getCloseDetailsLink(
+                      isAllVersions ? ALL_VERSIONS_PATH : FUNCTIONS_PAGE_PATH,
+                      false,
+                      params.funcName
+                    )
                   }
                   handleCancel={handleCancel}
                   pageData={pageData}
@@ -160,6 +166,7 @@ const FunctionsView = ({
                 <Pagination
                   paginationConfig={paginationConfigFunctionsRef.current}
                   closeParamName={isAllVersions ? ALL_VERSIONS_PATH : FUNCTIONS_PAGE_PATH}
+                  selectedItemName={params.funcName}
                 />
               </>
             )}
@@ -204,6 +211,7 @@ FunctionsView.propTypes = {
   closePanel: PropTypes.func.isRequired,
   confirmData: PropTypes.object,
   createFunctionSuccess: PropTypes.func.isRequired,
+  detailsFormInitialValues: PropTypes.object,
   editableItem: PropTypes.object,
   filters: PropTypes.object.isRequired,
   filtersStore: PropTypes.object.isRequired,

@@ -25,7 +25,7 @@ import PropTypes from 'prop-types'
 import DetailsPopUp from '../DetailsPopUp'
 
 import { showArtifactErrorNotification } from '../../../utils/artifacts.util'
-import { getViewMode } from '../../../utils/helper'
+import { getViewMode } from 'igz-controls/utils/common.util'
 import {
   generateActionsMenu as generateFileActionsMenu,
   generatePageData as generateFilePageData
@@ -43,11 +43,17 @@ import {
   generatePageData as generateDocumentPageData
 } from '../../../components/Documents/documents.util'
 import {
+  generateActionsMenu as generateLlmPromptActionsMenu,
+  generatePageData as generateLlmPromptPageData
+} from '../../../components/LLMPrompts/llmPrompts.util'
+import {
   DATASET_TYPE,
   DATASETS_PAGE,
   DOCUMENT_TYPE,
   DOCUMENTS_PAGE,
   FILES_PAGE,
+  LLM_PROMPT_TYPE,
+  LLM_PROMPTS_PAGE,
   MODEL_TYPE,
   MODELS_TAB
 } from '../../../constants'
@@ -56,6 +62,7 @@ import artifactsApi from '../../../api/artifacts-api'
 import { parseArtifacts } from '../../../utils/parseArtifacts'
 import { generateArtifacts } from '../../../utils/generateArtifacts'
 import { filterArtifacts } from '../../../utils/filterArtifacts'
+import { parseChipsData } from '../../../utils/convertChipsData'
 
 const ArtifactPopUp = ({ artifactData, isOpen, onResolve }) => {
   const dispatch = useDispatch()
@@ -64,34 +71,59 @@ const ArtifactPopUp = ({ artifactData, isOpen, onResolve }) => {
   const frontendSpec = useSelector(store => store.appStore.frontendSpec)
   const viewMode = getViewMode(window.location.search)
 
+  const detailsFormInitialValues = useMemo(() => {
+    return {
+      tag: selectedArtifact.tag ?? '',
+      labels: parseChipsData(selectedArtifact.labels ?? {})
+    }
+  }, [selectedArtifact.labels, selectedArtifact.tag])
+
   const artifactContext = useMemo(() => {
-    return [DATASETS_PAGE, DATASET_TYPE].includes(artifactData.kind)
-      ? {
+    switch (artifactData.kind) {
+      case DATASETS_PAGE:
+      case DATASET_TYPE:
+        return {
           type: DATASETS_PAGE,
           generateActionsMenu: generateDatasetActionsMenu,
-          pageData: generateDatasetPageData(viewMode, selectedArtifact, {}, true),
+          pageData: generateDatasetPageData(viewMode, true, selectedArtifact),
           fetchArtifact: artifactsApi.getDataSets
         }
-      : [MODELS_TAB, MODEL_TYPE].includes(artifactData.kind)
-        ? {
-            type: MODELS_TAB,
-            generateActionsMenu: generateModelActionsMenu,
-            pageData: generateModelPageData(viewMode, selectedArtifact),
-            fetchArtifact: artifactsApi.getModels
-          }
-        : [DOCUMENTS_PAGE, DOCUMENT_TYPE].includes(artifactData.kind)
-          ? {
-              type: DOCUMENTS_PAGE,
-              generateActionsMenu: generateDocumentActionsMenu,
-              pageData: generateDocumentPageData(viewMode),
-              fetchArtifact: artifactsApi.getDocuments
-            }
-          : {
-              type: FILES_PAGE,
-              generateActionsMenu: generateFileActionsMenu,
-              pageData: generateFilePageData(viewMode),
-              fetchArtifact: artifactsApi.getFiles
-            }
+
+      case MODELS_TAB:
+      case MODEL_TYPE:
+        return {
+          type: MODELS_TAB,
+          generateActionsMenu: generateModelActionsMenu,
+          pageData: generateModelPageData(viewMode, true, selectedArtifact),
+          fetchArtifact: artifactsApi.getModels
+        }
+
+      case DOCUMENTS_PAGE:
+      case DOCUMENT_TYPE:
+        return {
+          type: DOCUMENTS_PAGE,
+          generateActionsMenu: generateDocumentActionsMenu,
+          pageData: generateDocumentPageData(viewMode, true),
+          fetchArtifact: artifactsApi.getDocuments
+        }
+
+      case LLM_PROMPTS_PAGE:
+      case LLM_PROMPT_TYPE:
+        return {
+          type: LLM_PROMPTS_PAGE,
+          generateActionsMenu: generateLlmPromptActionsMenu,
+          pageData: generateLlmPromptPageData(viewMode, true),
+          fetchArtifact: artifactsApi.getLLMPrompts
+        }
+
+      default:
+        return {
+          type: FILES_PAGE,
+          generateActionsMenu: generateFileActionsMenu,
+          pageData: generateFilePageData(viewMode, true),
+          fetchArtifact: artifactsApi.getFiles
+        }
+    }
   }, [selectedArtifact, artifactData.kind, viewMode])
 
   const toggleConvertedYaml = useCallback(
@@ -141,7 +173,17 @@ const ArtifactPopUp = ({ artifactData, isOpen, onResolve }) => {
 
         onResolve()
       })
-  }, [artifactData, artifactContext, dispatch, onResolve])
+  }, [
+    artifactContext,
+    dispatch,
+    onResolve,
+    artifactData.key,
+    artifactData.iteration,
+    artifactData.tree,
+    artifactData.uid,
+    artifactData.tag,
+    artifactData.project
+  ])
 
   const actionsMenu = useMemo(
     () => fileMin =>
@@ -180,6 +222,7 @@ const ArtifactPopUp = ({ artifactData, isOpen, onResolve }) => {
   return (
     <DetailsPopUp
       actionsMenu={actionsMenu}
+      formInitialValues={detailsFormInitialValues}
       handleRefresh={fetchArtifact}
       isLoading={isLoading}
       isOpen={isOpen}

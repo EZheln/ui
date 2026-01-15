@@ -24,15 +24,20 @@ import { isEmpty } from 'lodash'
 import Prism from 'prismjs'
 import { useSelector } from 'react-redux'
 
-import ChipCell from '../../common/ChipCell/ChipCell'
-import CopyToClipboard from '../../common/CopyToClipboard/CopyToClipboard'
+import {
+  CopyToClipboard,
+  FormInput,
+  FormOnChange,
+  FormTextarea,
+  RoundedIcon,
+  TextTooltipTemplate,
+  Tooltip
+} from 'igz-controls/components'
 import DetailsInfoItemChip from '../DetailsInfoItemChip/DetailsInfoItemChip'
 import Input from '../../common/Input/Input'
-import { FormInput, FormOnChange, FormTextarea } from 'igz-controls/components'
-import { Tooltip, TextTooltipTemplate, RoundedIcon } from 'igz-controls/components'
-import { TAG_LATEST } from '../../constants'
 
-import { CHIP_OPTIONS } from '../../types'
+import { CHIP_OPTIONS } from 'igz-controls/types'
+import { TAG_LATEST } from '../../constants'
 import { getValidationRules } from 'igz-controls/utils/validation.util'
 
 import Checkmark from 'igz-controls/images/checkmark2.svg?react'
@@ -51,7 +56,7 @@ const DetailsInfoItem = React.forwardRef(
       },
       currentField = '',
       detailsInfoDispatch = () => {},
-      editableFieldType = null,
+      editableFieldType = '',
       formState = {},
       handleDiscardChanges = null,
       handleFinishEdit = () => {},
@@ -65,27 +70,27 @@ const DetailsInfoItem = React.forwardRef(
     ref
   ) => {
     const [inputIsValid, setInputIsValid] = useState(true)
-    const detailsStore = useSelector(store => store.detailsStore)
+    const commonDetailsStore = useSelector(store => store.commonDetailsStore)
 
     const discardChanges = () => {
       handleDiscardChanges && handleDiscardChanges(currentField)
-      item.handleDiscardChanges && item.handleDiscardChanges(formState, detailsStore)
+      item.handleDiscardChanges && item.handleDiscardChanges(formState, commonDetailsStore)
     }
 
-    if (item?.editModeEnabled && item?.editModeType === 'chips') {
+    if (item?.editModeType === 'chips') {
       return (
         <DetailsInfoItemChip
           chipsClassName={chipsClassName}
           chipsData={chipsData}
           currentField={currentField}
           detailsInfoDispatch={detailsInfoDispatch}
-          detailsStore={detailsStore}
+          commonDetailsStore={commonDetailsStore}
           editableFieldType={editableFieldType}
           formState={formState}
           handleFinishEdit={handleFinishEdit}
+          isEditable={!isDetailsPopUp && item?.editModeEnabled}
           isFieldInEditMode={isFieldInEditMode}
           item={item}
-          isEditable={!isDetailsPopUp}
         />
       )
     } else if (item?.editModeEnabled && isFieldInEditMode && !isDetailsPopUp) {
@@ -134,19 +139,6 @@ const DetailsInfoItem = React.forwardRef(
           <RoundedIcon onClick={discardChanges} tooltipText="Discard changes">
             <Close />
           </RoundedIcon>
-        </div>
-      )
-    } else if (chipsData?.chips?.length) {
-      return (
-        <div className="details-item__data">
-          <ChipCell
-            chipOptions={chipsData.chipOptions}
-            className={`details-item__${chipsClassName}`}
-            delimiter={chipsData.delimiter}
-            elements={chipsData.chips}
-            isEditMode={!isDetailsPopUp && chipsData.isEditEnabled}
-            visibleChipsMaxLength="all"
-          />
         </div>
       )
     } else if (item?.copyToClipboard && info) {
@@ -319,7 +311,7 @@ const DetailsInfoItem = React.forwardRef(
 DetailsInfoItem.propTypes = {
   chipsClassName: PropTypes.string,
   chipsData: PropTypes.shape({
-    chips: PropTypes.arrayOf(PropTypes.string),
+    chips: PropTypes.arrayOf(PropTypes.object),
     chipOptions: CHIP_OPTIONS,
     delimiter: PropTypes.oneOfType([PropTypes.string, PropTypes.element])
   }),

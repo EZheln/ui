@@ -17,31 +17,46 @@ illegal under applicable law, and the grant of the foregoing license
 under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
+import React from 'react'
 import { isEmpty } from 'lodash'
 
-import { LABELS_FILTER, MODEL_ENDPOINTS_TAB, MODELS_PAGE } from '../../../constants'
+import {
+  FILTER_ALL_ITEMS,
+  LABELS_FILTER,
+  MODEL_ENDPOINTS_TAB,
+  MODELS_PAGE,
+  ME_MODE_FILTER
+} from '../../../constants'
 import { TERTIARY_BUTTON } from 'igz-controls/constants'
-import { showErrorNotification } from '../../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { fetchModelEndpoint } from '../../../reducers/artifactsReducer'
-import { formatDatetime } from '../../../utils'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
 
 import Alert from 'igz-controls/images/alerts.svg?react'
+import MonitorIcon from 'igz-controls/images/monitor-icon.svg?react'
+import Yaml from 'igz-controls/images/yaml.svg?react'
 
 export const filtersConfig = {
+  [ME_MODE_FILTER]: { label: 'Mode:', initialValue: FILTER_ALL_ITEMS, isModal: true },
   [LABELS_FILTER]: { label: 'Labels:', initialValue: '', isModal: true }
 }
 
-const infoHeaders = [
-  { label: 'UID', id: 'uid' },
-  { label: 'Model class', id: 'model_class' },
-  { label: 'Model artifact', id: 'model_artifact' },
-  { label: 'Function URI', id: 'function_uri' },
-  { label: 'Function Tag', id: 'function_tag' },
-  { label: 'Feature set', id: 'monitoring_feature_set_uri' },
-  { label: 'Sampling percentage', id: 'sampling_percentage' },
-  { label: 'Last prediction', id: 'last_prediction' },
-  { label: 'Error count', id: 'error_count' }
-]
+const generateInfoHeaders = model_path => {
+  return [
+    { label: 'UID', id: 'uid' },
+    { label: 'Model class', id: 'model_class' },
+    {
+      label: model_path.includes('llm-prompts') ? 'LLM prompt artifact' : 'Model artifact',
+      id: 'model_artifact'
+    },
+    { label: 'Function URI', id: 'function_uri' },
+    { label: 'Function tag', id: 'function_tag' },
+    { label: 'Feature set', id: 'monitoring_feature_set_uri' },
+    { label: 'Sampling percentage', id: 'sampling_percentage' },
+    { label: 'Last prediction', id: 'last_prediction' },
+    { label: 'Error count', id: 'error_count' }
+  ]
+}
 
 const detailsMenu = [
   {
@@ -60,8 +75,7 @@ const detailsMenu = [
   {
     label: 'alerts',
     id: 'alerts',
-    icon: <Alert />,
-    query: '?entity-type=model-endpoint-result' //TODO: temp solution for query params
+    icon: <Alert />
   }
 ]
 
@@ -74,7 +88,7 @@ export const generatePageData = (
   hidePageActionMenu: true,
   details: {
     menu: detailsMenu,
-    infoHeaders,
+    infoHeaders: generateInfoHeaders(selectedItem?.spec?.model_path || ''),
     type: MODEL_ENDPOINTS_TAB,
     actionButton: {
       label: 'Resource monitoring',
@@ -86,6 +100,35 @@ export const generatePageData = (
     additionalHeaderInfo: formatDatetime(selectedItem?.metadata?.created, 'N/A')
   }
 })
+
+export const generateActionsMenu = (
+  modelMonitoringDashboardUrl,
+  handleMonitoring,
+  toggleConvertedYaml,
+  selectedModelEndpoint,
+  dispatch
+) => {
+  return [
+    [
+      {
+        label: 'Monitoring',
+        icon: <MonitorIcon />,
+        tooltip: !modelMonitoringDashboardUrl ? 'Grafana service unavailable' : '',
+        disabled: !modelMonitoringDashboardUrl,
+        onClick: handleMonitoring,
+        hidden: !isEmpty(selectedModelEndpoint)
+      },
+      {
+        label: 'View YAML',
+        icon: <Yaml />,
+        onClick: modelEndpointMin =>
+          chooseOrFetchModelEndpoint(dispatch, selectedModelEndpoint, modelEndpointMin).then(
+            toggleConvertedYaml
+          )
+      }
+    ]
+  ]
+}
 
 export const monitorModelEndpoint = (model_monitoring_dashboard_url, item, projectName) => {
   let redirectUrl = model_monitoring_dashboard_url

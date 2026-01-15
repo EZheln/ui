@@ -21,17 +21,13 @@ such restriction.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { chain, isEmpty, isNil } from 'lodash'
 import PropTypes from 'prop-types'
 
+import AddArtifactTagPopUp from '../../elements/AddArtifactTagPopUp/AddArtifactTagPopUp'
 import ArtifactsView from './ArtifactsView'
+import DeployModelPopUp from '../../elements/DeployModelPopUp/DeployModelPopUp'
 
-import { getViewMode } from '../../utils/helper'
-import { getSavedSearchParams, transformSearchParams } from '../../utils/filter.util'
-import { getFiltersConfig } from './artifacts.util'
-import { useFiltersFromSearchParams } from '../../hooks/useFiltersFromSearchParams.hook'
-import { useRefreshAfterDelete } from '../../hooks/useRefreshAfterDelete.hook'
-import { getCloseDetailsLink, isDetailsTabExists } from '../../utils/link-helper.util'
-import { openPopUp } from 'igz-controls/utils/common.util'
 import {
   ALL_VERSIONS_PATH,
   BE_PAGE,
@@ -44,18 +40,22 @@ import {
   TAG_FILTER,
   TAG_FILTER_ALL_ITEMS
 } from '../../constants'
-import { toggleYaml } from '../../reducers/appReducer'
-import { chain, isEmpty, isNil } from 'lodash'
+import { checkForSelectedArtifact } from '../../utils/artifacts.util'
 import { fetchArtifactsFunctions, fetchArtifactTags } from '../../reducers/artifactsReducer'
-import { getFilterTagOptions, setFilters } from '../../reducers/filtersReducer'
-import AddArtifactTagPopUp from '../../elements/AddArtifactTagPopUp/AddArtifactTagPopUp'
-import DeployModelPopUp from '../../elements/DeployModelPopUp/DeployModelPopUp'
-import { setNotification } from '../../reducers/notificationReducer'
-import { usePagination } from '../../hooks/usePagination.hook'
-import { checkForSelectedArtifact, setFullSelectedArtifact } from '../../utils/artifacts.util'
-import { getFeatureVectorData } from '../ModelsPage/Models/models.util'
 import { fetchModelFeatureVector } from '../../reducers/detailsReducer'
+import { getCloseDetailsLink, isDetailsTabExists } from '../../utils/link-helper.util'
+import { getFeatureVectorData } from '../ModelsPage/Models/models.util'
+import { getFilterTagOptions, setFilters } from '../../reducers/filtersReducer'
+import { getFiltersConfig } from './artifacts.util'
+import { getSavedSearchParams, transformSearchParams } from 'igz-controls/utils/filter.util'
+import { openPopUp, getViewMode } from 'igz-controls/utils/common.util'
+import { setNotification } from 'igz-controls/reducers/notificationReducer'
+import { toggleYaml } from '../../reducers/appReducer'
+import { useFiltersFromSearchParams } from '../../hooks/useFiltersFromSearchParams.hook'
 import { useMode } from '../../hooks/mode.hook'
+import { usePagination } from '../../hooks/usePagination.hook'
+import { useRefreshAfterDelete } from '../../hooks/useRefreshAfterDelete.hook'
+import { useTableScroll } from 'igz-controls/hooks/useTable.hook'
 
 const Artifacts = ({
   actionButtons = [],
@@ -65,6 +65,7 @@ const Artifacts = ({
   generateActionsMenu,
   generateDetailsFormInitialValues,
   generatePageData,
+  getArtifactFiltersConfig = null,
   handleApplyDetailsChanges,
   handleDeployArtifactFailure = null,
   isAllVersions = false,
@@ -101,17 +102,25 @@ const Artifacts = ({
       `/projects/${params.projectName}/${page}${tab ? `/${tab}` : ''}${getSavedSearchParams(location.search)}`,
     [location.search, page, params.projectName, tab]
   )
-  const filtersConfig = useMemo(() => getFiltersConfig(isAllVersions), [isAllVersions])
+  const filtersConfig = useMemo(
+    () => (getArtifactFiltersConfig || getFiltersConfig)(isAllVersions),
+    [getArtifactFiltersConfig, isAllVersions]
+  )
   const artifactsFilters = useFiltersFromSearchParams(filtersConfig)
   const [refreshAfterDeleteCallback, refreshAfterDeleteTrigger] = useRefreshAfterDelete(
     paginationConfigArtifactVersionsRef,
     historyBackLink,
     'artifacts',
-    params.id && getCloseDetailsLink(isAllVersions ? ALL_VERSIONS_PATH : tab || page, true),
+    params.id &&
+      getCloseDetailsLink(
+        isAllVersions ? ALL_VERSIONS_PATH : tab || page,
+        true,
+        params.artifactName
+      ),
     isAllVersions
   )
   const pageData = useMemo(
-    () => generatePageData(viewMode, selectedArtifact, params, false, isDemoMode),
+    () => generatePageData(viewMode, false, selectedArtifact, params, isDemoMode),
     [generatePageData, isDemoMode, params, selectedArtifact, viewMode]
   )
   const detailsFormInitialValues = useMemo(() => {
@@ -383,6 +392,12 @@ const Artifacts = ({
     resetPaginationTrigger: `${params.projectName}_${isAllVersions}`
   })
 
+  useTableScroll({
+    content: isAllVersions ? paginatedArtifactVersions : paginatedArtifacts,
+    selectedItem: selectedArtifact,
+    isAllVersions
+  })
+
   const tableContent = useMemo(() => {
     return (isAllVersions ? paginatedArtifactVersions : paginatedArtifacts).map(contentItem =>
       createArtifactsRowData(contentItem, params.projectName, isAllVersions)
@@ -397,29 +412,6 @@ const Artifacts = ({
 
   const tableHeaders = useMemo(() => tableContent[0]?.content ?? [], [tableContent])
 
-  const getAndSetSelectedArtifact = useCallback(() => {
-    setFullSelectedArtifact(
-      page,
-      tab,
-      dispatch,
-      navigate,
-      params.artifactName,
-      setSelectedArtifact,
-      params.projectName,
-      params.id,
-      isAllVersions
-    )
-  }, [
-    page,
-    tab,
-    dispatch,
-    navigate,
-    params.artifactName,
-    params.projectName,
-    params.id,
-    isAllVersions
-  ])
-
   useEffect(() => {
     if (params.id && pageData.details.menu.length > 0) {
       isDetailsTabExists(params.tab, pageData.details.menu, navigate, location)
@@ -432,45 +424,51 @@ const Artifacts = ({
     }
   }, [selectedArtifact])
 
-  useEffect(() => {
-    checkForSelectedArtifact({
-      artifactName: params.artifactName,
-      artifacts: isAllVersions ? artifactVersions : artifacts,
+  const getAndSetSelectedArtifact = useCallback(
+    (ignoreLastCheckedArtifact = false) => {
+      checkForSelectedArtifact({
+        artifactName: params.artifactName,
+        artifacts: isAllVersions ? artifactVersions : artifacts,
+        dispatch,
+        ignoreLastCheckedArtifact,
+        isAllVersions,
+        navigate,
+        paginatedArtifacts: isAllVersions ? paginatedArtifactVersions : paginatedArtifacts,
+        paginationConfigRef: isAllVersions
+          ? paginationConfigArtifactVersionsRef
+          : paginationConfigArtifactsRef,
+        paramsId: params.id,
+        projectName: params.projectName,
+        searchParams: isAllVersions ? searchArtifactVersionsParams : searchArtifactsParams,
+        setSearchParams: isAllVersions ? setSearchArtifactVersionsParams : setSearchArtifactsParams,
+        setSelectedArtifact: setSelectedArtifact,
+        setSelectedArtifactIsBeyondTheList,
+        lastCheckedArtifactIdRef,
+        page,
+        tab
+      })
+    },
+    [
+      artifactVersions,
+      artifacts,
       dispatch,
       isAllVersions,
       navigate,
-      paginatedArtifacts: isAllVersions ? paginatedArtifactVersions : paginatedArtifacts,
-      paginationConfigRef: isAllVersions
-        ? paginationConfigArtifactVersionsRef
-        : paginationConfigArtifactsRef,
-      paramsId: params.id,
-      projectName: params.projectName,
-      searchParams: isAllVersions ? searchArtifactVersionsParams : searchArtifactsParams,
-      setSearchParams: isAllVersions ? setSearchArtifactVersionsParams : setSearchArtifactsParams,
-      setSelectedArtifact: setSelectedArtifact,
-      setSelectedArtifactIsBeyondTheList,
-      lastCheckedArtifactIdRef,
       page,
+      paginatedArtifactVersions,
+      paginatedArtifacts,
+      params.artifactName,
+      params.id,
+      params.projectName,
+      searchArtifactVersionsParams,
+      searchArtifactsParams,
+      setSearchArtifactVersionsParams,
+      setSearchArtifactsParams,
       tab
-    })
-  }, [
-    artifactVersions,
-    artifacts,
-    dispatch,
-    isAllVersions,
-    navigate,
-    page,
-    paginatedArtifactVersions,
-    paginatedArtifacts,
-    params.artifactName,
-    params.id,
-    params.projectName,
-    searchArtifactVersionsParams,
-    searchArtifactsParams,
-    setSearchArtifactVersionsParams,
-    setSearchArtifactsParams,
-    tab
-  ])
+    ]
+  )
+
+  useEffect(() => getAndSetSelectedArtifact(true), [getAndSetSelectedArtifact])
 
   useEffect(() => {
     const tagAbortControllerCurrent = tagAbortControllerRef.current
@@ -562,6 +560,7 @@ Artifacts.propTypes = {
   generateActionsMenu: PropTypes.func.isRequired,
   generateDetailsFormInitialValues: PropTypes.func.isRequired,
   generatePageData: PropTypes.func.isRequired,
+  getArtifactFiltersConfig: PropTypes.func,
   handleApplyDetailsChanges: PropTypes.func.isRequired,
   handleDeployArtifactFailure: PropTypes.func,
   isAllVersions: PropTypes.bool,

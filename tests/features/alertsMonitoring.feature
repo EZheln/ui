@@ -256,7 +256,6 @@ Feature: Alerts Monitoring Page
     
     @MLAM
     @smoke
-    # TODO: Add data to the mock to check the following elements (existing job data for details popup)
     Scenario: MLAM006 - Check components in Job detail pop-up on Job alert detail pane
         Given open url
         And wait load page
@@ -282,14 +281,29 @@ Feature: Alerts Monitoring Page
         Then verify "Overview_General_Headers" element visibility on "Alerts_Jobs_Info_Pane" wizard
         Then verify "Overview_General_Headers" on "Alerts_Jobs_Info_Pane" wizard should contains "Alerts_Jobs_Info_Pane"."Overview_General_Headers"
         Then verify "Job_Detail_PopUp_Link" element visibility on "Alerts_Jobs_Info_Pane" wizard
+        When select "Any time" option in "Date_Picker_Filter_Dropdown" filter dropdown on "Alerts_Monitoring" wizard
+        And wait load page
+        Then type value "obryv-default" to "Search_By_Name_Filter_Input" field on "Alerts_Monitoring" wizard
+        Then click on "Refresh_Button" element on "Alerts_Monitoring" wizard
+        And wait load page
+        Then value in "alertName" column with "text" in "Alerts_Table" on "Alerts_Monitoring" wizard should contains "alert-name-obryv-default"
+        And wait load page
+        Then verify "Alerts_Table" element visibility on "Alerts_Monitoring" wizard
+        Then value in "entityType" column with "tooltip" in "Alerts_Table" on "Alerts_Monitoring" wizard should contains "Job"
+        When click on cell with row index 1 in "alertName" column in "Alerts_Table" table on "Alerts_Monitoring" wizard
+        And wait load page
+        Then verify "Header" element visibility on "Alerts_Jobs_Info_Pane" wizard
+        Then "Header" element on "Alerts_Jobs_Info_Pane" should contains "alert-name-obryv-default" value
+        Then verify "Overview_General_Headers" element visibility on "Alerts_Jobs_Info_Pane" wizard
+        Then verify "Overview_General_Headers" on "Alerts_Jobs_Info_Pane" wizard should contains "Alerts_Jobs_Info_Pane"."Overview_General_Headers"
+        Then verify "Job_Detail_PopUp_Link" element visibility on "Alerts_Jobs_Info_Pane" wizard
         Then click on "Job_Detail_PopUp_Link" element on "Alerts_Jobs_Info_Pane" wizard
-        # Add data to the mock to check the following elements
         Then verify if "Modal_Transition_Popup" popup dialog appears
         Then verify "Title" element visibility on "Modal_Transition_Popup" wizard
-        Then "Title" element on "Modal_Transition_Popup" should contains "erann-test" value
+        Then "Title" element on "Modal_Transition_Popup" should contains "test-func-oyn-handler" value
         Then verify "Data_Status" element visibility on "Modal_Transition_Popup" wizard
         Then verify "State_Icon" element visibility on "Modal_Transition_Popup" wizard
-        Then verify "State_Icon" element on "Modal_Transition_Popup" wizard should display hover tooltip "Jobs_Monitor_Tab_Info_Pane"."Error_State"
+        Then verify "State_Icon" element on "Modal_Transition_Popup" wizard should display hover tooltip "Jobs_Monitor_Tab_Info_Pane"."Error_State_With_Message"
         Then verify "Refresh_Button" element visibility on "Modal_Transition_Popup" wizard
         Then verify "Refresh_Button" element on "Modal_Transition_Popup" wizard should display hover tooltip "Common_Tooltips"."Refresh_Button"
         Then click on "Refresh_Button" element on "Modal_Transition_Popup" wizard
@@ -332,17 +346,17 @@ Feature: Alerts Monitoring Page
         Then verify "Logs" tab is active in "Tab_Selector" on "Modal_Transition_Popup" wizard
         Then verify "Logs_Text_container" element visibility on "Modal_Transition_Popup" wizard
         Then verify "Logs_Refresh_Button" element visibility on "Modal_Transition_Popup" wizard
-        And verify "No_Data_Message" element visibility on "commonPagesHeader" wizard
-        Then "No_Data_Message" component on "commonPagesHeader" should contains "No_Data_Message"."No_Data"
+        Then click on "Logs_Refresh_Button" element on "Modal_Transition_Popup" wizard
+        And wait load page
+        Then verify "Logs_Text_container" element visibility on "Modal_Transition_Popup" wizard
         And select "Pods" tab in "Tab_Selector" on "Modal_Transition_Popup" wizard
         And wait load page
         Then verify "Pods" tab is active in "Tab_Selector" on "Modal_Transition_Popup" wizard
         And verify "No_Data_Message" element visibility on "commonPagesHeader" wizard
-        Then "No_Data_Message" component on "commonPagesHeader" should contains "No_Data_Message"."No_Pods_data"
+        Then "No_Data_Message" component on "commonPagesHeader" should contains "No_Data_Message"."No_Pods_data_Completion"
 
     @MLAM
     @smoke
-    # TODO: Add data to the mock to check the following elements
     Scenario: MLAM007 - Check components on Endpoints alert detail pane
         Given open url
         And wait load page
@@ -379,20 +393,34 @@ Feature: Alerts Monitoring Page
         Then verify "Overview_Trigger_Criteria" on "Alerts_Endpoint_Info_Pane" wizard should contains "Alerts_Jobs_Info_Pane"."Overview_Trigger_Criteria_Headers"
         Then verify "Notifications_Header" element visibility on "Alerts_Endpoint_Info_Pane" wizard
         Then verify "Notifications_Item" element visibility on "Alerts_Endpoint_Info_Pane" wizard
-        Then verify "Date_Picker_Filter_Dropdown" element visibility on "Alerts_Endpoint_Info_Pane" wizard
-        Then verify "Date_Picker_Filter_Dropdown" dropdown on "Alerts_Endpoint_Info_Pane" wizard selected option value "Past 24 hours"
-        Then verify "Date_Picker_Filter_Dropdown" dropdown element on "Alerts_Endpoint_Info_Pane" wizard should contains "Dropdown_Options"."Date_Picker_Filter_Options_Endpoint"
-        Then click on "Header" element on "Alerts_Endpoint_Info_Pane" wizard
-        And wait load page
-        # Add data to the mock to check the following elements
-        # Then verify "Metrics_App_Name" element visibility on "Alerts_Endpoint_Info_Pane" wizard
-        # Then verify "Metrics_Stats_Card" element visibility on "Alerts_Endpoint_Info_Pane" wizard
         Then verify "Metrics_Stats_Card_Empty" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then "Metrics_Stats_Card_Empty" element on "Alerts_Endpoint_Info_Pane" should contains "Metrics data not found" value
         Then click on "Cross_Close_Button" element on "Alerts_Endpoint_Info_Pane" wizard
         Then verify "Header" element not exists on "Alerts_Endpoint_Info_Pane" wizard
         When click on cell with row index 1 in "alertName" column in "Alerts_Table" table on "Alerts_Monitoring" wizard
         And wait load page
         Then verify "Header" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        When select "Any time" option in "Date_Picker_Filter_Dropdown" filter dropdown on "Alerts_Monitoring" wizard
+        And wait load page
+        When click on cell with value "alert-name-uqbxb-proj-default" in "alertName" column in "Alerts_Table" table on "Alerts_Monitoring" wizard
+        And wait load page
+        Then verify "Header" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Overview_General_Headers" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Overview_General_Headers" on "Alerts_Endpoint_Info_Pane" wizard should contains "Alerts_Endpoint_Info_Pane"."Overview_General_Headers"
+        Then verify "Overview_Trigger_Criteria" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Overview_Trigger_Criteria" on "Alerts_Endpoint_Info_Pane" wizard should contains "Alerts_Jobs_Info_Pane"."Overview_Trigger_Criteria_Headers"
+        Then verify "Notifications_Header" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Notifications_Item" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Date_Picker_Filter_Dropdown" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Date_Picker_Filter_Dropdown" dropdown on "Alerts_Endpoint_Info_Pane" wizard selected option value "Past 24 hours"
+        Then verify "Date_Picker_Filter_Dropdown" dropdown element on "Alerts_Endpoint_Info_Pane" wizard should contains "Dropdown_Options"."Date_Picker_Filter_Options_Endpoint"
+        Then click on "Header" element on "Alerts_Endpoint_Info_Pane" wizard
+        And wait load page
+        Then verify "Metrics_App_Name" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Metrics_Stats_Card" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Metrics_Stats_Card_Metric_Name" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Metrics_Stats_Card_Metric_BodyBar" element visibility on "Alerts_Endpoint_Info_Pane" wizard
+        Then verify "Metrics_Stats_Card_Metric_BodyLine" element visibility on "Alerts_Endpoint_Info_Pane" wizard
 
     @MLAM
     @smoke

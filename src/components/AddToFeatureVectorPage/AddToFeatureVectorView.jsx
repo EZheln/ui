@@ -22,13 +22,13 @@ import { useParams } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
 import AddToFeatureVectorPageHeader from '../../elements/AddToFeatureVectorPageHeader/AddToFeatureVectorPageHeader'
-import Loader from '../../common/Loader/Loader'
 import NoData from '../../common/NoData/NoData'
 import Table from '../Table/Table'
 import FeatureStoreTableRow from '../../elements/FeatureStoreTableRow/FeatureStoreTableRow'
+import { Loader } from 'igz-controls/components'
 
 import { ADD_TO_FEATURE_VECTOR_TAB, FEATURE_STORE_PAGE } from '../../constants'
-import { VIRTUALIZATION_CONFIG } from '../../types'
+import { VIRTUALIZATION_CONFIG } from 'igz-controls/types'
 import { getNoDataMessage } from '../../utils/getNoDataMessage'
 import { isRowRendered } from '../../hooks/useVirtualization.hook'
 import ActionBar from '../ActionBar/ActionBar'
@@ -62,9 +62,9 @@ const AddToFeatureVectorView = React.forwardRef(
     const params = useParams()
     return (
       <div ref={ref} className="add-to-feature-vector content-wrapper">
-        <div className="content__header">
-          <AddToFeatureVectorPageHeader params={params} />
+        <div className="content">
           <div className="content__action-bar-wrapper">
+            <AddToFeatureVectorPageHeader params={params} />
             <ActionBar
               filters={filters}
               filtersConfig={filtersConfig}
@@ -76,9 +76,7 @@ const AddToFeatureVectorView = React.forwardRef(
               <AddToFeatureVectorFilters content={content} fetchTags={fetchTags} />
             </ActionBar>
           </div>
-        </div>
-        {(featureStore.loading || featureStore.features.loading) && <Loader />}
-        <div className="content">
+          {(featureStore.loading || featureStore.features.loading) && <Loader />}
           <div className="table-container">
             {featureStore.loading || featureStore.features.loading ? null : content.length === 0 ? (
               <NoData

@@ -18,19 +18,23 @@ under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
 import PropTypes from 'prop-types'
+
 import {
   BE_PAGE,
   BE_PAGE_SIZE,
-  DENSITY_CHUNKY,
-  DENSITY_DENSE,
-  DENSITY_MEDIUM,
-  DENSITY_NORMAL,
   FE_PAGE,
   FE_PAGE_SIZE,
+  GREY_NODE,
+  INPUT_NODE,
+  OUTPUT_NODE,
+  OVAL_NODE_SHAPE,
   PANEL_CREATE_MODE,
   PANEL_EDIT_MODE,
   PANEL_FUNCTION_CREATE_MODE,
-  PANEL_RERUN_MODE
+  PANEL_RERUN_MODE,
+  PRIMARY_NODE,
+  ROUNDED_RECTANGLE_NODE_SHAPE,
+  SECONDARY_NODE
 } from './constants'
 
 import { BUTTON_VARIANTS } from 'igz-controls/types'
@@ -43,50 +47,6 @@ export const COMBOBOX_MATCHES = PropTypes.arrayOf(
     label: PropTypes.string.isRequired
   })
 )
-
-export const DENSITY_OPTIONS = PropTypes.oneOf([
-  DENSITY_DENSE,
-  DENSITY_NORMAL,
-  DENSITY_MEDIUM,
-  DENSITY_CHUNKY
-])
-
-export const CHIP = PropTypes.shape({
-  delimiter: PropTypes.element,
-  id: PropTypes.string,
-  value: PropTypes.string.isRequired
-})
-
-export const CHIP_INPUT_LIST = PropTypes.arrayOf(
-  PropTypes.shape({
-    disabled: PropTypes.bool,
-    icon: PropTypes.element,
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    subLabel: PropTypes.string,
-    ui: PropTypes.object
-  })
-)
-
-export const CHIP_OPTIONS = PropTypes.shape({
-  background: PropTypes.oneOf([
-    'none',
-    'orange',
-    'green',
-    'purple',
-    'grey',
-    'sorbus',
-    'java',
-    'amethyst'
-  ]),
-  boldValue: PropTypes.bool,
-  borderColor: PropTypes.oneOf(['transparent', 'orange', 'green', 'purple', 'grey']),
-  density: DENSITY_OPTIONS,
-  font: PropTypes.oneOf(['primary', 'white', 'green', 'purple', 'orange']),
-  borderRadius: PropTypes.oneOf(['primary', 'secondary'])
-})
-
-export const CHIPS = PropTypes.arrayOf(CHIP)
 
 export const FUNCTION_PANEL_MODE = PropTypes.oneOf([PANEL_EDIT_MODE, PANEL_CREATE_MODE])
 
@@ -118,19 +78,6 @@ export const CONFIRM_DIALOG_BUTTON = PropTypes.shape({
   variant: PropTypes.string.isRequired
 })
 
-const ACTIONS_MENU_ITEM = PropTypes.shape({
-  label: PropTypes.string.isRequired,
-  icon: PropTypes.object,
-  onClick: PropTypes.func.isRequired,
-  disabled: PropTypes.bool,
-  className: PropTypes.string
-})
-
-export const ACTIONS_MENU = PropTypes.oneOfType([
-  PropTypes.arrayOf(PropTypes.arrayOf(ACTIONS_MENU_ITEM.isRequired)),
-  PropTypes.func
-])
-
 export const MAIN_SPLIT_BUTTON = PropTypes.shape({
   className: PropTypes.string,
   icon: PropTypes.element,
@@ -155,15 +102,6 @@ export const CONTENT_MENU_TABS = PropTypes.arrayOf(
     hidden: PropTypes.bool,
     preview: PropTypes.bool,
     icon: PropTypes.element
-  })
-)
-
-export const SLIDER_TABS = PropTypes.arrayOf(
-  PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    tip: PropTypes.string,
-    hidden: PropTypes.bool
   })
 )
 
@@ -216,12 +154,6 @@ export const JOB_WIZARD_MODE = PropTypes.oneOf([
   PANEL_RERUN_MODE
 ])
 
-export const VIRTUALIZATION_CONFIG = PropTypes.shape({
-  startIndex: PropTypes.number.isRequired,
-  endIndex: PropTypes.number.isRequired,
-  tableBodyPaddingTop: PropTypes.number.isRequired
-})
-
 export const SLIDER_STYLE_1 = 'style1'
 export const SLIDER_STYLE_2 = 'style2'
 
@@ -250,7 +182,8 @@ export const METRIC_DATA = PropTypes.shape({
   resultKind: PropTypes.number,
   app: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
-  labels: PropTypes.arrayOf(PropTypes.string).isRequired,
+  timeUnit: PropTypes.string,
+  formattedDates: PropTypes.arrayOf(PropTypes.string),
   dates: PropTypes.arrayOf(PropTypes.string).isRequired,
   points: PropTypes.arrayOf(PropTypes.number).isRequired,
   title: PropTypes.string.isRequired,
@@ -281,12 +214,12 @@ export const FILTERS_CONFIG = PropTypes.objectOf(
   })
 )
 
-export const STATUS_LIST = PropTypes.arrayOf(
+export const OPTIONS_LIST = PropTypes.arrayOf(
   PropTypes.shape({
     id: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
-    status: PropTypes.string.isRequired,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    status: PropTypes.string
   })
 )
 
@@ -311,4 +244,24 @@ export const MEMBER = PropTypes.shape({
   role: PropTypes.string.isRequired,
   initialRole: PropTypes.string,
   modification: PropTypes.string
+})
+
+export const REACT_FLOW_NODE_DATA = PropTypes.shape({
+  subType: PropTypes.oneOf([INPUT_NODE, OUTPUT_NODE, PRIMARY_NODE, SECONDARY_NODE, GREY_NODE])
+    .isRequired,
+  label: PropTypes.string.isRequired,
+  tip: PropTypes.string,
+  subLabel: PropTypes.string,
+  isSelectable: PropTypes.bool,
+  withOpacity: PropTypes.bool,
+  shape: PropTypes.oneOf([OVAL_NODE_SHAPE, ROUNDED_RECTANGLE_NODE_SHAPE, null]),
+  sourceHandle: PropTypes.shape({
+    tooltip: PropTypes.string,
+    className: PropTypes.string
+  }),
+  targetHandle: PropTypes.shape({
+    tooltip: PropTypes.string,
+    className: PropTypes.string
+  }),
+  customData: PropTypes.object
 })

@@ -18,7 +18,6 @@ under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
 import { isEqual, keyBy } from 'lodash'
-import { formatDate } from './datePicker.util'
 import {
   ADD_TO_FEATURE_VECTOR_TAB,
   ALERTS_PAGE,
@@ -64,8 +63,12 @@ import {
   TAG_FILTER_ALL_ITEMS,
   TYPE_FILTER,
   PROJECTS_FILTER_ALL_ITEMS,
-  LLM_PROMPTS_PAGE
+  LLM_PROMPTS_PAGE,
+  MODEL_NAME_FILTER,
+  MODEL_TAG_FILTER,
+  ME_MODE_FILTER
 } from '../constants'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
 
 const messageNamesList = {
   [ADD_TO_FEATURE_VECTOR_TAB]: {
@@ -156,17 +159,11 @@ export const getNoDataMessage = (
 }
 
 const getSelectedDateValue = (filterType, filters) => {
-  const date = formatDate(
-    true,
-    true,
-    '/',
-    filters[DATES_FILTER].value[0] ?? new Date(),
-    filters[DATES_FILTER].value[1] ?? new Date()
-  )
+  const date = `${formatDatetime(filters[DATES_FILTER]?.value?.[0] ?? new Date())} - ${formatDatetime(filters[DATES_FILTER]?.value?.[1] ?? new Date())}`
 
   return (filterType === DATE_RANGE_TIME_FILTER &&
-    !isEqual(filters[DATES_FILTER].value, DATE_FILTER_ANY_TIME)) ||
-    (filterType === DATES_FILTER && !isEqual(filters[DATES_FILTER].value, DATE_FILTER_ANY_TIME))
+    !isEqual(filters[DATES_FILTER]?.value, DATE_FILTER_ANY_TIME)) ||
+    (filterType === DATES_FILTER && !isEqual(filters[DATES_FILTER]?.value, DATE_FILTER_ANY_TIME))
     ? date
     : ANY_TIME
 }
@@ -181,7 +178,9 @@ const generateNoEntriesFoundMessage = (visibleFilterTypes, filtersConfig, filter
         : filters[filterType]
     const isLastElement = index === visibleFilterTypes.length - 1
 
-    return message + `${label} ${value}${isLastElement ? '"' : ', '}`
+    return (
+      message + `${label.endsWith(':') ? label : `${label}:`} ${value}${isLastElement ? '"' : ', '}`
+    )
   }, 'No data matches the filter: "')
 }
 
@@ -201,6 +200,8 @@ const getVisibleFilterTypes = (filtersConfig, filters, filtersStore) => {
         type === ENDPOINT_RESULT ||
         type === JOB_NAME ||
         type === LABELS_FILTER ||
+        type === MODEL_NAME_FILTER ||
+        type === MODEL_TAG_FILTER ||
         type === NAME_FILTER) &&
       filters[type]?.length > 0
     const isStatusVisible =
@@ -221,6 +222,7 @@ const getVisibleFilterTypes = (filtersConfig, filters, filtersStore) => {
       (type === DATES_FILTER && !isEqual(filters[DATES_FILTER]?.value, DATE_FILTER_ANY_TIME))
     const isShowUntaggedVisible = type === SHOW_UNTAGGED_FILTER && !filters[SHOW_UNTAGGED_FILTER]
     const isGroupByVisible = type === GROUP_BY_FILTER && filtersStore.groupBy !== GROUP_BY_NONE
+    const isMEModeVisible = type === ME_MODE_FILTER && filters[ME_MODE_FILTER] !== FILTER_ALL_ITEMS
 
     return (
       isDateVisible ||
@@ -234,7 +236,8 @@ const getVisibleFilterTypes = (filtersConfig, filters, filtersStore) => {
       isShowUntaggedVisible ||
       isStatusVisible ||
       isTagVisible ||
-      isTypeVisible
+      isTypeVisible ||
+      isMEModeVisible
     )
   })
 }

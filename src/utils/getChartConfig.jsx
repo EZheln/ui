@@ -18,6 +18,7 @@ under the Apache 2.0 license is conditioned upon your compliance with
 such restriction.
 */
 import { round } from 'lodash'
+
 import {
   CHART_TYPE_BAR,
   CHART_TYPE_GRADIENT_LINE,
@@ -25,7 +26,11 @@ import {
   CHART_TYPE_LINE
 } from '../constants'
 import { getScssVariableValue } from 'igz-controls/utils/common.util'
+import { getSupportedLocale } from 'igz-controls/utils/datetime.util'
 
+const POINT_SIZE_DRIFT = 3
+const POINT_SIZE_ISOLATED = 1
+const POINT_SIZE_HIDDEN = 0
 const mischkaColor = getScssVariableValue('--mischkaColor')
 
 const setHistogramChartText = (context, tooltipModel, tooltipEl) => {
@@ -65,11 +70,10 @@ const setMetricChartText = (context, tooltipModel, tooltipEl, chartType) => {
   if (tooltipModel.body) {
     const bodyLines = tooltipModel.body.map(b => b.lines)
     let innerHtml = '<div class="tooltip-container">'
-    let drift =
+    let drift = !!(
       context.tooltip.dataPoints[0].dataset.metricType &&
       context.tooltip.dataPoints[0].dataset.metricType === 'result'
-        ? true
-        : false
+    )
     const tooltipType = {
       bar: {
         title: '',
@@ -81,7 +85,9 @@ const setMetricChartText = (context, tooltipModel, tooltipEl, chartType) => {
       }
     }
     const fullDate =
-      context.tooltip.dataPoints[0].dataset?.dates?.[context.tooltip.dataPoints[0].dataIndex]
+      context.tooltip.dataPoints[0].dataset?.formatedDates?.[
+        context.tooltip.dataPoints[0].dataIndex
+      ]
 
     if (chartType === CHART_TYPE_LINE && fullDate) {
       innerHtml += `<div class="tooltip-container-date">Date: ${fullDate}</div>`
@@ -106,7 +112,23 @@ const setMetricChartText = (context, tooltipModel, tooltipEl, chartType) => {
   }
 }
 
-const generateCustomTooltip = (context, applicationChartType) => {
+const setMEPWithDetectionChartText = (context, tooltipModel, tooltipEl) => {
+  if (tooltipModel.body) {
+    let innerHtml = '<div class="tooltip-container">'
+    const fullDate =
+      context.tooltip.dataPoints[0].dataset?.dates?.[context.tooltip.dataPoints[0].dataIndex]
+
+    innerHtml += `<div class="tooltip-container-date">Date: ${fullDate}</div>`
+    innerHtml += `<div class="tooltip-container-value">Value: ${context.tooltip.dataPoints[0].raw}</div>`
+
+    innerHtml += '</div>'
+
+    const divRoot = tooltipEl.querySelector('div')
+    divRoot.innerHTML = innerHtml
+  }
+}
+
+const generateCustomTooltip = (context, applicationChartType, setText = setMetricChartText) => {
   // ChartJs type
   const chartType = context.tooltip.dataPoints[0].dataset.chartType
 
@@ -134,12 +156,7 @@ const generateCustomTooltip = (context, applicationChartType) => {
     return
   }
 
-  // Set Text
-  if (applicationChartType === CHART_TYPE_HISTOGRAM) {
-    setHistogramChartText(context, tooltipModel, tooltipEl)
-  } else {
-    setMetricChartText(context, tooltipModel, tooltipEl, chartType)
-  }
+  setText(context, tooltipModel, tooltipEl, chartType)
 
   // Display, position, and set styles for font
   const position = context.chart.canvas.getBoundingClientRect()
@@ -149,7 +166,22 @@ const generateCustomTooltip = (context, applicationChartType) => {
   tooltipEl.classList.remove('hidden')
 }
 
-export const getMetricChartConfig = type => {
+const LOCALE_FORMATS = {
+  'en-US': {
+    minute: 'h:mm a',
+    hour: 'h:mm a',
+    day: 'MM/dd/yy'
+  },
+  'en-GB': {
+    minute: 'HH:mm',
+    hour: 'HH:mm',
+    day: 'dd/MM/yy'
+  }
+}
+
+export const getMetricChartConfig = (type, metric) => {
+  const isSinglePoint = metric?.points?.length === 1
+  const supportedLocal = LOCALE_FORMATS[getSupportedLocale()]
   const defaultOptions = {
     layout: {
       padding: 0
@@ -175,7 +207,8 @@ export const getMetricChartConfig = type => {
           align: 'start',
           autoSkip: true,
           autoSkipPadding: 20,
-          maxRotation: 0
+          maxRotation: 0,
+          source: isSinglePoint ? 'data' : 'auto'
         },
         title: {
           display: true,
@@ -205,6 +238,17 @@ export const getMetricChartConfig = type => {
       point: {
         radius: 0
       }
+    },
+    scales: {
+      ...defaultOptions.scales,
+      x: {
+        ...defaultOptions.scales.x,
+        type: 'time',
+        time: {
+          unit: metric?.timeUnit ?? 'day',
+          displayFormats: supportedLocal
+        }
+      }
     }
   }
 
@@ -214,6 +258,11 @@ export const getMetricChartConfig = type => {
       ...defaultOptions.scales,
       x: {
         ...defaultOptions.scales.x,
+        type: 'time',
+        time: {
+          unit: metric?.timeUnit ?? 'day',
+          displayFormats: supportedLocal
+        },
         grid: {
           display: true
         }
@@ -238,6 +287,10 @@ export const getMetricChartConfig = type => {
   const barOptions = {
     ...defaultOptions,
     barThickness: 20,
+    borderRadius: {
+      topLeft: 4,
+      topRight: 4
+    },
     scales: {
       ...defaultOptions.scales,
       x: {
@@ -297,7 +350,8 @@ export const getHistogramChartConfig = () => {
         },
         tooltip: {
           enabled: false,
-          external: context => generateCustomTooltip(context, CHART_TYPE_HISTOGRAM),
+          external: context =>
+            generateCustomTooltip(context, CHART_TYPE_HISTOGRAM, setHistogramChartText),
           mode: 'index',
           intersect: false,
           callbacks: {
@@ -311,4 +365,102 @@ export const getHistogramChartConfig = () => {
       }
     }
   }
+}
+
+export const getMEPsWithDetectionChartConfig = () => {
+  const barConfig = getMetricChartConfig(CHART_TYPE_BAR)
+
+  return {
+    ...barConfig,
+    options: {
+      ...barConfig.options,
+      scales: {
+        ...barConfig.options.scales,
+        x: {
+          ...barConfig.options.scales.x,
+          title: {
+            display: false
+          }
+        },
+        y: {
+          ...barConfig.options.scales.y,
+          title: {
+            ...barConfig.options.scales.y.title,
+            text: 'Model endpoints'
+          }
+        }
+      },
+      plugins: {
+        ...barConfig.options.plugins,
+        tooltip: {
+          enabled: false,
+          intersect: false,
+          mode: 'index',
+          external: context => generateCustomTooltip(context, null, setMEPWithDetectionChartText)
+        }
+      }
+    }
+  }
+}
+
+const MAX_CHART_GAP_MS = 1000 * 60 * 20 // 20 min
+
+export const getGapDefiningSegment = () => {
+  return {
+    borderColor: context => {
+      if (context.p0 && context.p1) {
+        const timeDiff = context.p1.parsed.x - context.p0.parsed.x
+
+        if (timeDiff > MAX_CHART_GAP_MS) return 'transparent'
+      }
+
+      return undefined
+    },
+    backgroundColor: context => {
+      if (context.p0 && context.p1) {
+        const timeDiff = context.p1.parsed.x - context.p0.parsed.x
+
+        if (timeDiff > MAX_CHART_GAP_MS) return 'transparent'
+      }
+
+      return undefined
+    }
+  }
+}
+
+const isIsolatedPoint = (currentX, index, timestamps) => {
+  const prevX = index > 0 ? timestamps[index - 1] : null
+  const isConnectedToPrev = prevX !== null && currentX - prevX <= MAX_CHART_GAP_MS
+
+  const nextX = index < timestamps.length - 1 ? timestamps[index + 1] : null
+  const isConnectedToNext = nextX !== null && nextX - currentX <= MAX_CHART_GAP_MS
+
+  return !isConnectedToPrev && !isConnectedToNext
+}
+
+const isKeyDriftPoint = (index, totalDriftIndex, hasDrift, isSinglePoint) => {
+  if (isSinglePoint) return true
+
+  return hasDrift && index === totalDriftIndex
+}
+
+export const calculateVisiblePoints = (dates, driftStatusList = [], totalDriftIndex = null) => {
+  if (!dates?.length) return []
+
+  const timestamps = dates.map(d => new Date(d).getTime())
+
+  const hasDrift = driftStatusList?.length > 0
+  const isSinglePoint = dates.length === 1
+
+  return timestamps.map((currentX, index) => {
+    if (isKeyDriftPoint(index, totalDriftIndex, hasDrift, isSinglePoint)) {
+      return POINT_SIZE_DRIFT
+    }
+
+    if (isIsolatedPoint(currentX, index, timestamps)) {
+      return POINT_SIZE_ISOLATED
+    }
+
+    return POINT_SIZE_HIDDEN
+  })
 }

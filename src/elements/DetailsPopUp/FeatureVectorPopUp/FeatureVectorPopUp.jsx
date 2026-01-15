@@ -24,7 +24,7 @@ import PropTypes from 'prop-types'
 
 import DetailsPopUp from '../DetailsPopUp'
 
-import { showErrorNotification } from '../../../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { parseFeatureVectors } from '../../../utils/parseFeatureVectors'
 import {
   generateActionsMenu,
@@ -49,8 +49,8 @@ const FeatureVectorPopUp = ({ featureVectorData, isOpen, onResolve }) => {
   )
 
   const actionsMenu = useMemo(
-    () => generateActionsMenu(() => {}, toggleConvertedYaml, true),
-    [toggleConvertedYaml]
+    () => generateActionsMenu(dispatch, () => {}, toggleConvertedYaml, true),
+    [toggleConvertedYaml, dispatch]
   )
   const pageData = useMemo(() => generatePageData(selectedFeatureVector), [selectedFeatureVector])
   const detailsFormInitialValues = useMemo(

@@ -19,46 +19,48 @@ such restriction.
 */
 import { orderBy } from 'lodash'
 
-import { MONITOR_JOBS_TAB, MONITOR_WORKFLOWS_TAB, SCHEDULE_TAB } from '../../constants'
-import { formatDatetime } from '../../utils'
 import { measureTime } from '../../utils/measureTime'
+import {
+  ABORTED_STATE,
+  FAILED_STATE,
+  MONITOR_JOBS_TAB,
+  RUNNING_STATE,
+  SUCCEEDED_STATE
+} from '../../constants'
+import { formatDatetime } from 'igz-controls/utils/datetime.util'
+import { typesOfJob } from '../../utils/jobs.util'
 
 export const getJobsStatistics = (projectCounter, projectName) => {
   return {
     running: {
-      value: projectCounter.error ? 'N/A' : projectCounter.data.runs_running_count,
-      label: 'Running jobs',
-      className:
-        projectCounter.error || projectCounter.data.runs_running_count === 0
-          ? 'default'
-          : 'running',
-      link: `/projects/${projectName}/jobs/${MONITOR_JOBS_TAB}`
-    },
-    workflows: {
-      value: projectCounter.error ? 'N/A' : projectCounter.data.pipelines_running_count,
-      label: 'Running workflows',
-      className:
-        projectCounter.error || projectCounter.data.pipelines_running_count === 0
-          ? 'default'
-          : 'running',
-      link: `/projects/${projectName}/jobs/${MONITOR_WORKFLOWS_TAB}`
+      value: projectCounter.error ? 'N/A' : projectCounter?.data?.runs_running_count,
+      label: 'In Process',
+      className: RUNNING_STATE,
+      status: RUNNING_STATE,
+      link: `/projects/${projectName}/jobs/${MONITOR_JOBS_TAB}`,
+      counterTooltip: 'Aborting, Pending, Pending retry, Running',
+      loading: projectCounter.loading
     },
     failed: {
-      value: projectCounter.error ? 'N/A' : projectCounter.data.runs_failed_recent_count,
+      value: projectCounter.error ? 'N/A' : projectCounter?.data?.runs_failed_recent_count,
       label: 'Failed',
       className:
-        projectCounter.data.runs_failed_recent_count > 0 && !projectCounter.error
-          ? 'failed'
-          : 'default',
-      counterTooltip: 'Past 24 hours',
-      link: `/projects/${projectName}/jobs/${MONITOR_JOBS_TAB}`
+        projectCounter.error || projectCounter?.data?.runs_failed_recent_count === 0
+          ? RUNNING_STATE
+          : FAILED_STATE,
+      status: FAILED_STATE,
+      link: `/projects/${projectName}/jobs/${MONITOR_JOBS_TAB}`,
+      counterTooltip: 'Aborted, Error',
+      loading: projectCounter.loading
     },
-    scheduled: {
-      value: projectCounter.error ? 'N/A' : projectCounter.data.distinct_schedules_count,
-      label: 'Scheduled',
-      className:
-        projectCounter.error || projectCounter.data.schedules_count === 0 ? 'default' : 'scheduled',
-      link: `/projects/${projectName}/jobs/${SCHEDULE_TAB}`
+    succeeded: {
+      value: projectCounter.error ? 'N/A' : projectCounter?.data?.runs_completed_recent_count,
+      label: 'Succeeded',
+      status: SUCCEEDED_STATE,
+      className: RUNNING_STATE,
+      link: `/projects/${projectName}/jobs/${MONITOR_JOBS_TAB}`,
+      counterTooltip: 'Completed',
+      loading: projectCounter.loading
     }
   }
 }
@@ -76,7 +78,8 @@ export const getJobsTableData = (jobs, projectName) => {
         },
         type: {
           value: job[0].metadata.kind ?? job[0].metadata.labels?.kind ?? '',
-          className: 'section-table__table-cell table-cell_small'
+          className: 'section-table__table-cell table-cell_small',
+          types: typesOfJob
         },
         status: {
           value: job.map(item => item.status.state),
@@ -85,7 +88,7 @@ export const getJobsTableData = (jobs, projectName) => {
         startTime: {
           value: formatDatetime(
             job[0].status.start_time,
-            job[0].status.state === 'aborted' ? 'N/A' : 'Not yet started'
+            job[0].status.state === ABORTED_STATE ? 'N/A' : 'Not yet started'
           ),
           className: 'table-cell_big'
         },
@@ -115,7 +118,7 @@ export const getJobsTableData = (jobs, projectName) => {
 }
 
 export const groupByName = content => {
-  const groupedItems = {}
+  const groupedItems = Object.create(null)
 
   content.forEach(contentItem => {
     groupedItems[contentItem.metadata.name]
