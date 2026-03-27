@@ -33,8 +33,8 @@ import 'prismjs/components/prism-yaml.min.js'
 import 'prismjs/components/prism-json.min.js'
 import 'prismjs/components/prism-python.min.js'
 
+import { LoaderForSuspenseFallback } from 'igz-controls/components'
 import Header from './layout/Header/Header'
-import LoaderForSuspenseFallback from './common/Loader/LoaderForSuspenseFallback'
 import Notifications from './common/Notifications/Notifications'
 
 import localStorageService from './utils/localStorageService'
@@ -124,6 +124,9 @@ const WorkflowsMonitoring = lazyRetry(
 )
 const Documents = lazyRetry(() => import('./components/Documents/Documents'))
 const LLMPrompts = lazyRetry(() => import('./components/LLMPrompts/LLMPrompts'))
+const ApplicationMetrics = lazyRetry(
+  () => import('./components/ApplicationMetrics/ApplicationMetrics')
+)
 
 const MonitoringApplicationsPage = lazyRetry(
   () => import('./components/MonitoringApplicationsPage/MonitoringApplicationsPage')
@@ -335,6 +338,14 @@ const App = () => {
           ].map((path, index) => (
             <Fragment key={index}>
               <Route path={path} element={<Files isAllVersions={[2, 3].includes(index)} />} />
+            </Fragment>
+          ))}
+          {[
+            `projects/:projectName/monitoring-app/:appName/${MODEL_ENDPOINTS_TAB}`,
+            `projects/:projectName/monitoring-app/:appName/${MODEL_ENDPOINTS_TAB}/:id`
+          ].map((path, index) => (
+            <Fragment key={index}>
+              <Route path={path} element={<ApplicationMetrics />} />
             </Fragment>
           ))}
           <Route

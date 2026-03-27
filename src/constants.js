@@ -34,13 +34,6 @@ export const V3IO_INPUT_PATH_SCHEME = 'v3io:///'
 export const TAG_LATEST = 'latest'
 export const TAG_NA = 'na'
 
-export const DENSITY_DENSE = 'dense'
-export const DENSITY_NORMAL = 'normal'
-export const DENSITY_MEDIUM = 'medium'
-export const DENSITY_CHUNKY = 'chunky'
-
-export const FULL_VIEW_MODE = 'full'
-
 export const LARGE_REQUEST_CANCELED = 'Large request canceled'
 export const REQUEST_CANCELED = 'Request canceled'
 export const DEFAULT_ABORT_MSG = 'canceled'
@@ -58,8 +51,6 @@ export const FAIL_STATE = 'fail'
 export const FAILED_STATE = 'failed'
 export const PENDING_STATE = 'pending'
 export const UNKNOWN_STATE = 'unknown'
-
-export const VIEW_SEARCH_PARAMETER = 'view'
 
 /*=========== PAGINATION =============*/
 
@@ -135,6 +126,8 @@ export const MONITORING_APP_PAGE = 'monitoring-app'
 export const DOCUMENTS_PAGE = 'documents'
 
 export const LLM_PROMPTS_PAGE = 'llm-prompts'
+export const PROMPT_TAB = 'prompt'
+export const ARGUMENTS_TAB = 'arguments'
 
 export const PROJECT_MONITOR = 'monitor'
 
@@ -317,6 +310,7 @@ export const DETAILS_RESULTS_TAB = 'results'
 export const DETAILS_RETURNED_FEATURES_TAB = 'returned-features'
 export const DETAILS_STATISTICS_TAB = 'statistics'
 export const DETAILS_TRANSFORMATIONS_TAB = 'transformations'
+export const DETAILS_PROMPT_TEMPLATE_TAB = 'prompt-template'
 export const FETCH_MODEL_FEATURE_VECTOR_BEGIN = 'FETCH_MODEL_FEATURE_VECTOR_BEGIN'
 export const FETCH_MODEL_FEATURE_VECTOR_FAILURE = 'FETCH_MODEL_FEATURE_VECTOR_FAILURE'
 export const FETCH_MODEL_FEATURE_VECTOR_SUCCESS = 'FETCH_MODEL_FEATURE_VECTOR_SUCCESS'
@@ -354,10 +348,7 @@ export const KEY_CODES = {
 /*=========== TABLE =============*/
 
 export const TABLE_CONTAINER = 'table-container'
-export const MAIN_TABLE_ID = 'main-table'
-export const MAIN_TABLE_BODY_ID = 'main-table-body'
 
-export const BUTTON_COPY_URI_CELL_TYPE = 'buttonCopyURI'
 
 /*=========== FILTERS =============*/
 

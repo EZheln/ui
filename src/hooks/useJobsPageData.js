@@ -39,7 +39,7 @@ import { parseJob } from '../utils/parseJob'
 import { fetchAllJobRuns, fetchJobs, fetchScheduledJobs } from '../reducers/jobReducer'
 import { fetchWorkflows } from '../reducers/workflowReducer'
 import { useFiltersFromSearchParams } from './useFiltersFromSearchParams.hook'
-import { getSavedSearchParams } from '../utils/filter.util'
+import { getSavedSearchParams } from 'igz-controls/utils/filter.util'
 import { useRefreshAfterDelete } from './useRefreshAfterDelete.hook'
 
 export const useJobsPageData = (initialTabData, selectedTab) => {
@@ -196,7 +196,7 @@ export const useJobsPageData = (initialTabData, selectedTab) => {
       setScheduledJobs([])
       abortControllerRef.current = new AbortController()
 
-      dispatch(
+      return dispatch(
         fetchScheduledJobs({
           project: filters.project ? filters.project.toLowerCase() : params.projectName || '*',
           filters,

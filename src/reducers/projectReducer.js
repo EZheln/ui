@@ -28,7 +28,7 @@ import {
 } from 'igz-controls/constants'
 import { DEFAULT_ABORT_MSG, PROJECT_ONLINE_STATUS, REQUEST_CANCELED } from '../constants'
 import { parseProjects } from '../utils/parseProjects'
-import { showErrorNotification } from '../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { parseSummaryData } from '../utils/parseSummaryData'
 import { mlrunUnhealthyErrors } from '../components/ProjectsPage/projects.util'
 
@@ -261,7 +261,7 @@ export const fetchProjectSummary = createAsyncThunk(
 )
 export const fetchProjects = createAsyncThunk(
   'fetchProjects',
-  ({ params, setRequestErrorMessage = () => {} }, thunkAPI) => {
+  ({ params, setRequestErrorMessage = () => {}, showNotification = true }, thunkAPI) => {
     setRequestErrorMessage('')
 
     return projectsApi
@@ -270,14 +270,17 @@ export const fetchProjects = createAsyncThunk(
         return parseProjects(response.data.projects)
       })
       .catch(error => {
-        showErrorNotification(
-          thunkAPI.dispatch,
-          error,
-          'Failed to fetch projects',
-          null,
-          null,
-          setRequestErrorMessage
-        )
+        if (showNotification) {
+          showErrorNotification(
+            thunkAPI.dispatch,
+            error,
+            'Failed to fetch projects',
+            null,
+            null,
+            setRequestErrorMessage
+          )
+        }
+
         return thunkAPI.rejectWithValue(error)
       })
   }

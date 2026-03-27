@@ -31,7 +31,7 @@ import {
 } from '../constants'
 import { largeResponseCatchHandler } from '../utils/largeResponseCatchHandler'
 import functionsApi from '../api/functions-api'
-import { showErrorNotification } from '../utils/notifications.util'
+import { showErrorNotification } from 'igz-controls/utils/notification.util'
 import { getNewJobErrorMsg } from '../components/JobWizard/JobWizard.util'
 
 const initialState = {
@@ -140,8 +140,8 @@ export const deleteAllJobRuns = createAsyncThunk('deleteAllJobRuns', ({ project,
 export const deleteJob = createAsyncThunk('deleteJob', ({ project, job }) => {
   return jobsApi.deleteJob(project, job.uid)
 })
-export const editJob = createAsyncThunk('editJob', ({ postData, project }) => {
-  return jobsApi.editJob(postData, project)
+export const editJob = createAsyncThunk('editJob', ({ postData, project }, thunkAPI) => {
+  return jobsApi.editJob(postData, project).catch(thunkAPI.rejectWithValue)
 })
 export const fetchAllJobRuns = createAsyncThunk(
   'fetchAllJobRuns',
